@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.local
+.vite/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+*.tsbuildinfo
+/vite.config.js
+/vite.config.d.ts
