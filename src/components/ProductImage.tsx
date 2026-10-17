@@ -14,7 +14,7 @@ export function ProductImage({
 }) {
   const images = useQuery({
     queryKey: ['product-images', productId],
-    queryFn: () => catalogApi.productImages(productId),
+    queryFn: ({ signal }) => catalogApi.productImages(productId, signal),
     staleTime: 4 * 60_000,
   });
   const [failedUrl, setFailedUrl] = useState('');

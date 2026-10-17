@@ -39,9 +39,7 @@ export function Navbar() {
   function search(event: React.FormEvent) {
     event.preventDefault();
     const value = query.trim();
-    navigate(
-      value ? `/?q=${encodeURIComponent(value)}#products` : '/#products',
-    );
+    navigate(value ? `/products?q=${encodeURIComponent(value)}` : '/products');
   }
 
   return (
@@ -49,7 +47,7 @@ export function Navbar() {
       <div className="announcement">
         <div className="container">
           <span>Chọn điều bạn thích. Nâng tầm mỗi ngày.</span>
-          <Link to="/#products">
+          <Link to="/products">
             Khám phá bộ sưu tập <Icon name="arrow" size={13} />
           </Link>
         </div>
@@ -137,11 +135,11 @@ export function Navbar() {
               <NavLink to="/" end>
                 Khám phá
               </NavLink>
-              <Link to="/#products">Tất cả sản phẩm</Link>
+              <NavLink to="/products">Tất cả sản phẩm</NavLink>
               {categories.data?.slice(0, 4).map((category) => (
                 <Link
                   key={category.id}
-                  to={`/?category=${category.id}#products`}
+                  to={`/products?category=${category.id}`}
                 >
                   {category.name}
                 </Link>
@@ -172,9 +170,9 @@ export function Navbar() {
               </button>
             </form>
             <Link to="/">Trang chủ</Link>
-            <Link to="/#products">Tất cả sản phẩm</Link>
+            <Link to="/products">Tất cả sản phẩm</Link>
             {categories.data?.map((category) => (
-              <Link key={category.id} to={`/?category=${category.id}#products`}>
+              <Link key={category.id} to={`/products?category=${category.id}`}>
                 {category.name}
               </Link>
             ))}

@@ -68,17 +68,18 @@ image nginx chạy được trên Linux sau khi clone trên Windows.
 
 ## Phạm vi giao diện
 
-| Màn hình             | Dữ liệu và hành vi                                                                                             |
-| -------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Trang chủ / danh mục | Danh mục, tìm kiếm, sắp xếp, phân trang từ Catalog API; bộ lọc nằm trên URL                                    |
-| Chi tiết sản phẩm    | Ảnh từ Catalog image API, chọn SKU, số lượng, thêm giỏ; giữ lựa chọn khi chuyển qua đăng nhập                  |
-| Đã lưu               | Lưu ID sản phẩm trên trình duyệt; đọc thông tin hiện tại từ Catalog API, không phải wishlist đồng bộ tài khoản |
-| Đăng nhập / đăng ký  | Validation, ẩn/hiện mật khẩu, CAPTCHA thích ứng theo phản hồi backend, quay lại trang đang mua                 |
-| Giỏ hàng             | Cập nhật/xóa SKU qua Cart API; tên và giá từ báo giá phía server                                               |
-| Đặt hàng             | Báo giá theo phiên bản giỏ; giá/tồn kho do server kiểm tra; retry trong cùng lượt dùng lại idempotency key     |
-| Đơn hàng             | `/orders` phân trang, `/orders/:orderId` đọc snapshot/trạng thái hiện tại từ API theo chủ sở hữu; reload được |
-| Xác nhận             | Checkout mở chi tiết theo ID; URL xác nhận cũ bridge tới API detail, không render snapshot tài khoản trước |
-| Hồ sơ                | Thông tin thật của tài khoản, đăng xuất và xóa cache giỏ/báo giá khi đổi tài khoản                             |
+| Màn hình                       | Dữ liệu và hành vi                                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| Trang chủ / danh mục           | Danh mục, tìm kiếm, sắp xếp, phân trang từ Catalog API; bộ lọc nằm trên URL                                         |
+| Danh sách sản phẩm `/products` | Trang PLP riêng: bộ lọc danh mục/từ khóa, sắp xếp, lưới/danh sách, lưu sản phẩm; hộp thoại lọc nháp trên điện thoại |
+| Chi tiết sản phẩm              | Ảnh từ Catalog image API, chọn SKU, số lượng, thêm giỏ; giữ lựa chọn khi chuyển qua đăng nhập                       |
+| Đã lưu                         | Lưu ID sản phẩm trên trình duyệt; đọc thông tin hiện tại từ Catalog API, không phải wishlist đồng bộ tài khoản      |
+| Đăng nhập / đăng ký            | Validation, ẩn/hiện mật khẩu, CAPTCHA thích ứng theo phản hồi backend, quay lại trang đang mua                      |
+| Giỏ hàng                       | Cập nhật/xóa SKU qua Cart API; tên và giá từ báo giá phía server                                                    |
+| Đặt hàng                       | Báo giá theo phiên bản giỏ; giá/tồn kho do server kiểm tra; retry trong cùng lượt dùng lại idempotency key          |
+| Đơn hàng                       | `/orders` phân trang, `/orders/:orderId` đọc snapshot/trạng thái hiện tại từ API theo chủ sở hữu; reload được       |
+| Xác nhận                       | Checkout mở chi tiết theo ID; URL xác nhận cũ bridge tới API detail, không render snapshot tài khoản trước          |
+| Hồ sơ                          | Thông tin thật của tài khoản, đăng xuất và xóa cache giỏ/báo giá khi đổi tài khoản                                  |
 
 Mọi trang có trạng thái tải, rỗng hoặc lỗi phù hợp. Ảnh sản phẩm lỗi/thiếu dùng placeholder trung tính, không gán ảnh minh họa thành hàng hóa thật. Không thêm đánh giá, giảm giá hoặc tồn kho giả.
 
@@ -101,7 +102,7 @@ npm test
 npm run build
 ```
 
-`lint` kiểm tra TypeScript cho cả ứng dụng và cấu hình Vite, không sinh JS cạnh source hoặc sửa build artifact đang được Git theo dõi. Cache TypeScript của cấu hình nằm trong `node_modules/.tmp/`. `test` chạy 6 kiểm tra session/cache bằng Node built-in test runner và TypeScript hiện có, không thêm dependency. `build` chạy cả TypeScript và test trước khi tạo `dist/`.
+`lint` kiểm tra TypeScript cho cả ứng dụng và cấu hình Vite, không sinh JS cạnh source hoặc sửa build artifact đang được Git theo dõi. Cache TypeScript của cấu hình nằm trong `node_modules/.tmp/`. `test` chạy 26 kiểm tra (6 session/cache, 12 trạng thái URL/phân trang/giá của PLP và 8 motion/cleanup) bằng Node built-in test runner và TypeScript hiện có, không thêm dependency. `build` chạy cả TypeScript và test trước khi tạo `dist/`.
 
 Khi dùng Dockerfile hiện có, tài nguyên mới trong `public/` được đưa vào image qua Vite build. Nếu đưa `dist/` lên S3/CloudFront, cần SPA fallback về `index.html` và cấu hình API/CORS đúng trước khi build. Không cần chạy React dev server trong production.
 
@@ -121,6 +122,114 @@ Compose backend-only và pipeline image backend không cần source UI.
 Rollback giao diện bằng cách triển khai lại frontend image/bundle trước đó. Lần thay đổi này không sửa Java API hay migration, không cần rollback schema. Không dùng reset toàn bộ worktree vì có thể mất thay đổi khác của người dùng.
 
 Font Be Vietnam Pro được phục vụ nội bộ, kèm giấy phép trong `public/fonts/OFL.txt`. Nguồn ảnh minh họa và prompt ảnh hero ở `public/images/ATTRIBUTION.md`.
+
+## Shop UI — Product Listing Page
+
+Trang mới ở `/products`; trang chủ `/` và các luồng tài khoản/giỏ/đơn hàng vẫn được giữ.
+Navigation và tìm kiếm trên header dẫn tới PLP. Không thay đổi API hay schema backend.
+
+- Đọc trực tiếp dữ liệu E-commerce của `.agents/skills/ui-ux-pro-max`, không cần Python.
+  Bản thiết kế và nguồn CSV được lưu tại `design-system/shop-ui/MASTER.md`,
+  quy tắc riêng của trang tại `design-system/shop-ui/pages/product-listing.md`.
+- Theo lựa chọn mới của người dùng, PLP đã chuyển từ xanh mint sang hướng
+  **biên tập cao cấp, nhiều khoảng thở**: ivory, chữ than đậm, nhấn đất nung;
+  tiêu đề Lora serif/italic và nội dung Be Vietnam Pro hiện có. Lora hỗ trợ
+  tiếng Việt, phục vụ WOFF2 local kèm `public/fonts/lora-OFL.txt`. Font cũ và
+  giấy phép được giữ nguyên. Override thiết kế nằm trong tài liệu page ở trên.
+- Header/footer đồng bộ màu chỉ khi đang ở trang `/products`; các màn hình
+  khác không bị đổi theme hoặc logic. Khung ảnh biên tập không đại diện sản
+  phẩm thật; thẻ sản phẩm luôn lấy ảnh từ API.
+- URL lưu `q`, `category`, `sort`, `page` (bắt đầu từ 0) và `view=list`.
+  Thay từ khóa/danh mục/sắp xếp đưa về trang đầu; đổi lưới/danh sách giữ trang.
+  Back/reload giữ lựa chọn; xóa lọc không xóa sắp xếp hoặc kiểu hiển thị.
+- Trên điện thoại, bộ lọc là bản nháp. Chỉ nút **Áp dụng bộ lọc** cập nhật URL;
+  đóng hoặc Escape hủy nháp và trả focus về nút mở. Danh sách đã lưu dùng kho
+  local hiện có, không phải wishlist đồng bộ tài khoản.
+- Giá, danh mục, phiên bản và ảnh từ API thật. Không có đánh giá/giảm giá/tồn kho
+  giả, không lọc giá hay sắp xếp giá khi backend chưa hỗ trợ. Giá “Từ” chỉ tính
+  giữa các phiên bản có cùng tiền tệ. Mỗi trang 12 sản phẩm; chọn SKU tại trang chi tiết.
+- Có tải, lỗi/thử lại, không có kết quả và phục hồi trang quá cuối. Hỗ trợ theme tối,
+  focus nhìn thấy được và `prefers-reduced-motion`; không thêm thư viện runtime.
+
+Kiểm tra local ngày 16/10/2026: 18/18 test, TypeScript và Vite build đạt; lọc danh
+mục âm thanh trả 3 sản phẩm QA, tìm “tai nghe” trả 2, tên A–Z đúng thứ tự;
+reload/Back, lưu/bỏ lưu, lọc nháp/áp dụng/Escape, trang rỗng và trang quá cuối
+được kiểm tra. 375×812, 768×1024, 812×375 và 1440×1000 không tràn ngang;
+theme tối được xem trực tiếp. Kiểm tra mất kết nối dùng một dev proxy riêng,
+không dừng backend. QA dùng 8 sản phẩm có sẵn trong schema riêng, không seed
+schema `shop`, không checkout hay thanh toán. Nhiều trang và biên giá/URL được
+kiểm tra bằng unit test; chưa có hơn 12 sản phẩm để nghiệm thu phân trang nhiều
+trang trên API thật. Reduced motion được kiểm tra trong source, chưa mô phỏng
+thiết lập OS/trình duyệt. Đây không phải chứng nhận WCAG hay kiểm thử bảo mật.
+
+Nhánh review PLP là `codex/shop-ui-product-listing`; chưa merge main hoặc deploy.
+Chạy `npm run dev`, mở
+`http://localhost:5173/products` với backend như hướng dẫn ở trên. Preview QA
+riêng nếu đang chạy là `http://127.0.0.1:5174/products`.
+
+Vòng chỉnh editorial theo phản hồi người dùng: 18/18 test, TypeScript/Vite build
+và `git diff --check` đạt. Đã xem trực tiếp sáng/tối và kiểm tra lại tìm kiếm,
+danh mục/sắp xếp, lưới/danh sách, Back/reload, lọc nháp/Apply/Escape, trạng thái
+không có kết quả và liên kết sang chi tiết. Các viewport 375×812, 768×1024,
+812×375, 1440×1000 không tràn ngang. Tên sản phẩm và ô tìm kiếm mobile là 16px;
+nút lưu 44×44px. Trang chủ/chi tiết giữ giao diện trước đó. Chưa đo LCP hay
+chứng nhận WCAG; không thay đổi hay nghiệm thu lại thanh toán trong vòng UI này.
+
+## UI-PLP-02 — Motion và chuẩn bị xuất bản, 18/10/2026
+
+Tiếp tục bản editorial theo `.agents/skills/ui-ux-pro-max`; không thiết kế lại
+trang chủ, checkout hoặc các màn hình tài khoản. Hợp đồng tám phần ở
+`design-system/shop-ui/pages/product-listing.md`.
+
+- Hero copy/caption xuất hiện nhẹ; ảnh hero và sản phẩm không bị giấu để chờ
+  JavaScript/animation. Dialog và thông báo lưu có chuyển động ngắn, không
+  trì hoãn đóng/Escape hoặc cập nhật bộ lọc.
+- Icon lưu có phản hồi khác nhau khi lưu/bỏ lưu. Click tiếp hủy animation cũ;
+  hủy cả khi đổi tùy chọn giảm chuyển động hoặc unmount. Trạng thái lưu không
+  phụ thuộc animation kết thúc. Không thêm thư viện animation runtime.
+- CSS motion opt-in theo `prefers-reduced-motion: no-preference`; chế độ
+  giảm chuyển động tắt cả backdrop. Hiệu ứng zoom ảnh chỉ cho chuột hỗ trợ hover.
+- Bộ lọc đóng cập nhật trạng thái ngay, không để sự kiện close cũ làm sai một
+  lần mở mới; tác vụ cuộn bằng requestAnimationFrame được cleanup khi đổi route.
+  Đổi/bỏ lọc sau liên kết tới catalog không ép cuộn trở về đầu trang.
+- 26/26 test, TypeScript, Vite production build và diff check đạt. Đã kiểm tra
+  API QA thật: lưu/bỏ lưu (khôi phục trạng thái cũ), danh mục/sắp xếp, tìm kiếm
+  không kết quả, Back/reload, lưới/danh sách, nháp/Apply/Escape/trả focus, route
+  chi tiết và đăng nhập. Không đăng nhập hoặc checkout/thanh toán trong lượt này.
+- Đã xem sáng/tối và các viewport 375×812, 768×1024, 812×375, 1440×1000,
+  không thấy tràn ngang; nút lưu 44×44px. Landscape dialog nằm trong viewport
+  và nút Apply vẫn tiếp cận được. Preference JS có unit test; CSS được review,
+  chưa mô phỏng giảm chuyển động ở cấp OS/trình duyệt hoặc chứng nhận WCAG/LCP.
+- Backend QA chỉ bind loopback, dùng schema `shop_ui_qa_20261015` và bucket
+  `shop-ui-review-20261015` có sẵn. Flyway nâng riêng QA V24→V25 khi chạy JAR
+  hiện hành. Không seed/chuyển/xóa ảnh, không sửa dữ liệu schema `shop`, không
+  sửa code backend. Payment provider `none`, refund/auto-initiation tắt.
+
+### Dependency audit trước khi xuất bản
+
+React Router được pin từ 6.28.0 lên **6.30.6**, router lõi 1.23.4, cùng major
+v6 và cùng BrowserRouter. Lockfile được cập nhật, test/build chạy lại đạt.
+`npm audit --omit=dev --audit-level=high` không còn high/critical, nhưng **vẫn
+còn 2 moderate dependency findings**; exit 0 của lệnh này không phải zero findings.
+
+Các advisory đã xử lý theo version:
+[GHSA-2w69-qvjg-hvjx](https://github.com/advisories/GHSA-2w69-qvjg-hvjx),
+[GHSA-2j2x-hqr9-3h42](https://github.com/advisories/GHSA-2j2x-hqr9-3h42).
+Maintainer loại trừ Declarative/BrowserRouter khỏi hai luồng bị ảnh hưởng;
+không kết luận ứng dụng hiện tại đã bị khai thác từ kết quả audit.
+
+Hai advisory còn lại:
+[backslash navigation](https://github.com/advisories/GHSA-wrjc-x8rr-h8h6),
+[SSR hydration](https://github.com/advisories/GHSA-337j-9hxr-rhxg).
+Ứng dụng không SSR/hydrate Router errors; điều hướng vẫn cần đánh giá input
+không tin cậy. Bản vá được advisory công bố thuộc v7.18+, nên nâng major Router
+và nghiệm thu auth/return URLs là task riêng trước production. Không chạy
+audit fix --force hoặc coi scope UI này là security sign-off toàn dự án;
+dev-toolchain audit, CI/CD và deploy vẫn còn riêng.
+
+Xuất bản chỉ source UI đã review trên feature branch; không đưa `.agents/`,
+secret, `node_modules`, `dist`, log hoặc backend vào commit. Không merge main
+hay kích hoạt deploy trong task này.
 
 ## Nghiệm thu thủ công — 15/10/2026
 

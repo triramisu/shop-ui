@@ -11,6 +11,7 @@ const paths = {
   heart:
     'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z',
   grid: 'M3 3h7v7H3V3Zm11 0h7v7h-7V3ZM3 14h7v7H3v-7Zm11 0h7v7h-7v-7Z',
+  list: 'M9 5h12M9 12h12M9 19h12M3 5h1M3 12h1M3 19h1',
   headphones:
     'M3 14v-3a9 9 0 0 1 18 0v3M3 13h3v8H3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Zm15 0h3a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3v-8Z',
   laptop: 'M4 3h16v13H4V3ZM2 20l2-4h16l2 4H2Zm7-1h6',

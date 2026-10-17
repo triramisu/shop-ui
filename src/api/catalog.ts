@@ -10,11 +10,17 @@ import type {
 // Toàn bộ endpoint này là công khai (GET /api/catalog/**) nên auth:false.
 export const catalogApi = {
   categories: () =>
-    api.get<StorefrontCategoryResponse[]>('/catalog/categories', { auth: false }),
+    api.get<StorefrontCategoryResponse[]>('/catalog/categories', {
+      auth: false,
+    }),
 
-  searchProducts: (params: StorefrontProductSearchParams) =>
+  searchProducts: (
+    params: StorefrontProductSearchParams,
+    signal?: AbortSignal,
+  ) =>
     api.get<StorefrontProductPageResponse>('/catalog/products', {
       auth: false,
+      signal,
       query: {
         keyword: params.keyword,
         categoryId: params.categoryId,
@@ -26,10 +32,16 @@ export const catalogApi = {
     }),
 
   product: (productId: string) =>
-    api.get<StorefrontProductResponse>(`/catalog/products/${productId}`, { auth: false }),
-
-  productImages: (productId: string) =>
-    api.get<StorefrontProductImageResponse[]>(`/catalog/products/${productId}/images`, {
+    api.get<StorefrontProductResponse>(`/catalog/products/${productId}`, {
       auth: false,
     }),
+
+  productImages: (productId: string, signal?: AbortSignal) =>
+    api.get<StorefrontProductImageResponse[]>(
+      `/catalog/products/${productId}/images`,
+      {
+        auth: false,
+        signal,
+      },
+    ),
 };
