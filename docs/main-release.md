@@ -74,10 +74,25 @@
 - Các mục “còn2moderate” trong README là lịch sử trước nâng dependency này;
   kết quả audit0 không bảo đảm không còn lỗ hổng chưa biết hoặc sai cấu hình.
 
+## Kiểm tra PR trên Ubuntu / Node 22
+
+- PR phát hành: [#1](https://github.com/triramisu/shop-ui/pull/1).
+- Lần CI đầu phát hiện script `node --test tests` coi `tests` là một module
+  trên Node 22. Đổi sang `node --test` để dùng discovery mặc định của Node
+  cho các file `*.test.mjs`, không đổi assertion hoặc giảm số test.
+- Job dependency-review ban đầu báo repo chưa bật Dependency graph. Đây là
+  cấu hình GitHub cần bật riêng, không sửa thành skip hoặc hạ severity để
+  che lỗi. Chỉ merge khi cả hai job thực sự đạt trên head mới nhất.
+- Sau khi chủ repo xác nhận, đã bật riêng Dependency graph cho repo UI:
+  Settings → Advanced Security → Dependency graph. Không bật Dependabot
+  auto-update, CodeQL, AI Scan hoặc tính năng trả phí; không cấp quyền AWS.
+
 ## Nguồn đối chiếu
 
 - [Vite env và mode](https://vite.dev/guide/env-and-mode): build-time,
   production mode và override precedence; VITE_* là dữ liệu public.
+- [Bật Dependency graph](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/enable-dependency-graph):
+  GitHub đọc manifest/lockfile để phục vụ dependency review.
 - React Router advisories:
   [backslash redirect](https://github.com/advisories/GHSA-wrjc-x8rr-h8h6),
   [SSR hydration](https://github.com/advisories/GHSA-337j-9hxr-rhxg).

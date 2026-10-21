@@ -126,6 +126,11 @@ CI/CD UI và triển khai cloud là bước riêng; đưa source lên GitHub kh�
 nghĩa đã deploy. Các file JS/declaration Vite và TypeScript build cache sinh
 từ lần build cũ được bỏ qua; cấu hình nguồn là `vite.config.ts`.
 
+CI phát hành được theo dõi tại [PR #1](https://github.com/triramisu/shop-ui/pull/1).
+`npm test` dùng `node --test` để Node tự tìm các file `*.test.mjs`, tương thích
+cả máy dev và Node 22 trên Ubuntu. Repo đã bật riêng Dependency graph để job
+dependency-review đọc được lockfile; không bật tự nâng dependency hay CD.
+
 Không commit `node_modules/`, `dist/`, `.env.local`/`.env.*.local` hoặc token.
 Chỉ `.env.example`, `.env.development` và `.env.production` public được theo dõi.
 `.gitattributes` giữ shell entrypoint ở LF để
