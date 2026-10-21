@@ -30,6 +30,7 @@ export async function loadClient() {
   const code = compile('../src/lib/apiClient.ts')
     .replace(/from ['"]\.\/session['"]/, `from '${sessionUrl}'`)
     .replace('import.meta.env.VITE_API_BASE_URL', '"/api"');
-  const client = await import(moduleUrl(code));
-  return { session, client };
+  const clientUrl = moduleUrl(code);
+  const client = await import(clientUrl);
+  return { session, client, clientUrl };
 }

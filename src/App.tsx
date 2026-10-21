@@ -1,5 +1,6 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { Layout } from '@/components/Layout';
+import { Layout, Spinner } from '@/components/Layout';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
 import { CatalogPage } from '@/pages/CatalogPage';
 import { ProductPage } from '@/pages/ProductPage';
@@ -14,11 +15,21 @@ import { SavedPage } from '@/pages/SavedPage';
 import { OrdersPage } from '@/pages/OrdersPage';
 import { OrderDetailPage } from '@/pages/OrderDetailPage';
 
+const ProductListingPage = lazy(() => import('@/pages/ProductListingPage'));
+
 export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<CatalogPage />} />
+        <Route
+          path="products"
+          element={
+            <Suspense fallback={<Spinner label="Đang mở cửa hàng…" />}>
+              <ProductListingPage />
+            </Suspense>
+          }
+        />
         <Route path="products/:productId" element={<ProductPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />

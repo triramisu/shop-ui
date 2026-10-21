@@ -1,5 +1,9 @@
 import { api } from '@/lib/apiClient';
-import type { OrderHistoryResponse, OrderSnapshotResponse } from '@/lib/types';
+import type {
+  OrderHistoryResponse,
+  OrderPaymentResponse,
+  OrderSnapshotResponse,
+} from '@/lib/types';
 
 export const ordersApi = {
   history: (page: number, signal?: AbortSignal) =>
@@ -10,5 +14,10 @@ export const ordersApi = {
   detail: (id: string, signal?: AbortSignal) =>
     api.get<OrderSnapshotResponse>(`/orders/${encodeURIComponent(id)}`, {
       signal,
+    }),
+  payment: (id: string, signal?: AbortSignal) =>
+    api.get<OrderPaymentResponse>(`/orders/${encodeURIComponent(id)}/payment`, {
+      signal,
+      retryAuth: false,
     }),
 };

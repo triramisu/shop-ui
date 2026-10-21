@@ -1,24 +1,33 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { Icon } from './Icon';
 
 export function Layout() {
   const { pathname, hash } = useLocation();
+  const previousPath = useRef<string>();
   useEffect(() => {
+    const changedPage = previousPath.current !== pathname;
+    previousPath.current = pathname;
     if (hash) {
-      requestAnimationFrame(() =>
-        document
-          .getElementById(hash.slice(1))
-          ?.scrollIntoView({ behavior: 'smooth' }),
+      const frame = requestAnimationFrame(() =>
+        document.getElementById(hash.slice(1))?.scrollIntoView({
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)')
+            .matches
+            ? 'auto'
+            : 'smooth',
+        }),
       );
-    } else {
+      return () => cancelAnimationFrame(frame);
+    } else if (changedPage) {
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
   }, [pathname, hash]);
 
   return (
-    <div className="site-shell">
+    <div
+      className={`site-shell${pathname.replace(/\/+$/, '') === '/products' ? ' site-shell--editorial' : ''}`}
+    >
       <a className="skip-link" href="#main-content">
         Đến nội dung chính
       </a>
@@ -40,7 +49,7 @@ export function Layout() {
           </div>
           <div>
             <h3>Khám phá</h3>
-            <Link to="/#products">Tất cả sản phẩm</Link>
+            <Link to="/products">Tất cả sản phẩm</Link>
             <Link to="/saved">Sản phẩm đã lưu</Link>
             <Link to="/#collections">Không gian cảm hứng</Link>
           </div>
@@ -57,7 +66,7 @@ export function Layout() {
               <br />
               Một trải nghiệm tốt hơn mỗi ngày.
             </p>
-            <Link to="/#products" className="text-link">
+            <Link to="/products" className="text-link">
               Tìm điều bạn thích <Icon name="arrow" size={17} />
             </Link>
           </div>
