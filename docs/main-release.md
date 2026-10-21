@@ -103,6 +103,29 @@
 
 ## Git, phát hành và rollback
 
+### Nghiệm thu nguồn main — 21/10/2026
+
+- Commit PLP `5d7af78`, UI/config `b5df4b7` và sửa Node 22 `8bcbb24`
+  đã vào [PR #1](https://github.com/triramisu/shop-ui/pull/1).
+- [CI PR head 8bcbb24](https://github.com/triramisu/shop-ui/actions/runs/39627965821)
+  có verify và dependency-review success. Ubuntu / Node 22.23.3 chạy 67 test,
+  không fail/skip; build và audit toàn cây dependency đạt, review không phát
+  hiện dependency moderate trở lên. Không bypass check hoặc protection.
+- PR merge thành `2f103a3ffeeb90918e9a43c712d10031e379ddb7`.
+  [CI push main](https://github.com/triramisu/shop-ui/actions/runs/39628199286)
+  báo Status Success; log verify có 67/67 test, build đạt, audit 0 finding.
+  Dependency-review chỉ chạy ở pull_request nên skipped trên push main.
+- Đã fetch, switch main, merge --ff-only: HEAD = origin/main tại commit chức
+  năng trên. Sau npm ci, build/test và full audit local đều đạt lại; dist được
+  tạo từ main. `.agents/` của chủ repo vẫn untracked, không bị xóa/commit.
+- GitHub connector có thể đọc repo nhưng tạo PR trả 403; đã dùng giao diện
+  GitHub sau khi chủ repo tự đăng nhập, không lấy token từ kho credential.
+- Chỉ cập nhật nguồn UI và cấu hình Dependency graph đã được duyệt. Không
+  thực hiện AWS CLI, upload S3, bật payment, thay secret hoặc deploy backend.
+- Các bằng chứng ở trên áp dụng commit chức năng, không tự xác nhận một
+  commit tương lai đã qua CI. Commit tài liệu bàn giao tiếp tục qua PR và
+  hậu kiểm main riêng trước khi đồng bộ máy build.
+
 Chủ repo đã yêu cầu hoàn thiện main để tự build. Agent được giao commit/push
 và merge qua PR có gates, không được push thẳng main/bypass protection.
 Theo dõi SHA/PR/check status thật trên GitHub; không lấy hướng dẫn làm bằng
