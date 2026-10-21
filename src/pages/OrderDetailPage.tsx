@@ -12,6 +12,7 @@ import {
 } from '@/components/Layout';
 import { Icon } from '@/components/Icon';
 import { OrderStatusBadge } from '@/components/OrderStatusBadge';
+import { OrderPaymentPanel } from '@/components/OrderPaymentPanel';
 
 export function OrderDetailPage() {
   const { orderId = '' } = useParams();
@@ -141,17 +142,14 @@ export function OrderDetailPage() {
                     {formatMoney(order.grandTotal, order.currency)}
                   </strong>
                 </div>
-                <p className="order-snapshot-note">
-                  Trạng thái do hệ thống xác nhận. Trang này không phải biên
-                  nhận từ cổng thanh toán.
-                </p>
+                <OrderPaymentPanel key={`${user.id}:${order.id}`} order={order} userId={user.id} />
               </aside>
             </div>
             <div className="confirmation-actions">
               <Link to="/orders" className="btn btn-secondary">
                 Tất cả đơn hàng
               </Link>
-              <Link to="/#products" className="btn btn-dark">
+              <Link to="/#products" className={`btn ${order.status === 'PENDING' ? 'btn-secondary' : 'btn-dark'}`}>
                 Tiếp tục khám phá <Icon name="arrow" size={17} />
               </Link>
             </div>

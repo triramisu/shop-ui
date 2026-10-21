@@ -2,6 +2,68 @@
 
 React 18 + TypeScript + Vite, sử dụng API thật của Shop. Thiết kế riêng theo hướng editorial: nền kem, chữ đậm, màu đất nung, ảnh có khoảng thở và bố cục gọn. Không dùng layout/template của hai dự án tham khảo.
 
+## Build production cho CloudFront và S3 — UI-REL-01
+
+Nguồn phát hành là **main của repo UI**, không phải main backend. Release này
+gom PLP editorial/motion, phần UI VNPay đã kiểm thử local và tách env dev/prod;
+không đồng nghĩa đã upload AWS, bật provider thanh toán hoặc nghiệm thu go-live.
+Xem [hợp đồng, gates và rollback](docs/main-release.md). Các mục theo ngày bên
+dưới là lịch sử bàn giao, không phải trạng thái publish hiện tại.
+
+| Chạy lệnh | File public được Vite nạp | API trên trình duyệt | Proxy backend |
+|---|---|---|---|
+| npm run dev | .env.development | /api | localhost:8080, chỉ ở máy dev |
+| npm run build | .env.production | /api trên cùng domain CloudFront | Không có dev proxy trong cấu hình production |
+
+`.env.production` được theo dõi trong Git vì **chỉ có cấu hình công khai**:
+
+```dotenv
+VITE_API_BASE_URL=/api
+VITE_PAYMENT_ALLOWED_ORIGINS=https://aydibro.click
+```
+
+Website gọi `https://aydibro.click/api/…`; CloudFront chuyển `/api/*` sang ALB.
+Không đặt `shop.aydibro.click`, IP EC2, private IP, RDS hoặc S3 endpoint vào
+API UI. Allowlist payment chỉ cho mở handoff HTTPS do backend phát hành đúng
+origin; không tự bật VNPay hoặc xác nhận tiền. Khi đổi hostname của
+VNPAY_PUBLIC_BASE_URL phải review allowlist và build lại. Không nhập merchant
+secret, JWT key, DB password hoặc AWS credentials vào bất kỳ biến VITE_* nào.
+
+Clone sạch để build sau khi PR release đã merge vào main:
+
+```powershell
+git clone --branch main https://github.com/triramisu/shop-ui.git
+cd shop-ui
+npm ci
+npm run build
+```
+
+Nếu đã có repo **đang ở main và không có thay đổi chưa lưu**, dùng
+`git pull --ff-only` trước `npm ci`. Không reset hoặc switch bỏ thay đổi local.
+Vite nhúng env lúc build; chỉnh env trên EC2/S3 sau build không sửa bundle.
+Override trong shell hay `.env.production.local` vẫn phải qua build guard:
+production chỉ nhận `/api`, build sai mode/localhost/absolute API sẽ lỗi rõ
+ràng thay vì xuất một bundle trỏ nhầm máy cá nhân. `.env.local` vẫn dành cho
+dev; không commit file override thật.
+
+Build tạo **dist/index.html**, **dist/assets**, ảnh/font công khai. Upload
+**nội dung bên trong dist** lên đúng S3 UI bucket private, không upload cả
+repo, node_modules, env hay một tầng thư mục dist lồng thêm. CloudFront dùng
+OAC đọc bucket; không bật S3 website/public để chữa403. Giữ `/api/*` không
+cache, SPA fallback chỉ rewrite route UI, không đổi lỗi API thành index.html.
+Sau upload cần kiểm cache/invalidation, mở trực tiếp `/products` rồi reload,
+kiểm tra Network có request `/api/catalog/products`, không localhost.
+Không chạy `npm run dev`/React server trên S3 và không cần Docker UI cho mô
+hình S3/CloudFront này. Việc upload/DNS/invalidation chưa tự chạy trong task.
+
+React Router được nâng lên7.18.4 để xử lý hai moderate runtime advisory;
+giữ React18/BrowserRouter và kiểm regression auth/navigation. CI mới chỉ
+chạy **verify + dependency-review**, không có deploy job, secret AWS hoặc
+tự upload S3. Xem kết quả đúng commit/PR trên GitHub Actions; build pass
+không thay thế kiểm thử mua hàng/VNPay SIT hoặc kiểm toán bảo mật toàn dự án.
+Vite được nâng6.4.4 để xử lý cả dev-toolchain findings; plugin React4.3.4 hỗ
+trợ Vite6. Không bật CORS/allowedHosts wildcard hoặc audit fix --force.
+
 ## Chạy local
 
 Đây là project UI riêng tại `D:/shop-ui`, không còn nằm trong repo backend.
@@ -22,10 +84,12 @@ Nếu cần đổi API, tạo `.env.local` từ `.env.example`:
 ```dotenv
 VITE_API_BASE_URL=/api
 VITE_DEV_API_TARGET=http://localhost:8080
+VITE_PAYMENT_ALLOWED_ORIGINS=
 ```
 
 - `VITE_DEV_API_TARGET` chỉ dùng cho proxy dev. Khởi động lại Vite khi đổi biến này.
 - `VITE_API_BASE_URL` được nhúng vào bundle khi build. Không đưa secret/token vào biến `VITE_*`.
+- `VITE_PAYMENT_ALLOWED_ORIGINS` là danh sách origin HTTPS backend được tin cậy, phân cách bằng dấu phẩy, ví dụ `https://api.example.com`. Chỉ điền hostname backend thật sau khi đã có HTTPS; không điền domain VNPay, URL có path, wildcard hoặc merchant secret. Để trống vẫn chạy dev/fake bình thường nhưng UI không mở link thanh toán.
 - Nếu truy cập bằng origin khác, cấu hình CORS của backend phải cho phép đúng origin đó; không mở wildcard để chữa lỗi đăng nhập.
 - Các script chỉ định `vite.config.ts` tường minh, tránh chọn nhầm file JS cấu hình sinh sẵn trong repository.
 
@@ -62,8 +126,9 @@ CI/CD UI và triển khai cloud là bước riêng; đưa source lên GitHub kh�
 nghĩa đã deploy. Các file JS/declaration Vite và TypeScript build cache sinh
 từ lần build cũ được bỏ qua; cấu hình nguồn là `vite.config.ts`.
 
-Không commit `node_modules/`, `dist/`, `.env*` thật hoặc token. File mẫu
-`.env.example` được theo dõi. `.gitattributes` giữ shell entrypoint ở LF để
+Không commit `node_modules/`, `dist/`, `.env.local`/`.env.*.local` hoặc token.
+Chỉ `.env.example`, `.env.development` và `.env.production` public được theo dõi.
+`.gitattributes` giữ shell entrypoint ở LF để
 image nginx chạy được trên Linux sau khi clone trên Windows.
 
 ## Phạm vi giao diện
@@ -78,6 +143,7 @@ image nginx chạy được trên Linux sau khi clone trên Windows.
 | Giỏ hàng                       | Cập nhật/xóa SKU qua Cart API; tên và giá từ báo giá phía server                                                    |
 | Đặt hàng                       | Báo giá theo phiên bản giỏ; giá/tồn kho do server kiểm tra; retry trong cùng lượt dùng lại idempotency key          |
 | Đơn hàng                       | `/orders` phân trang, `/orders/:orderId` đọc snapshot/trạng thái hiện tại từ API theo chủ sở hữu; reload được       |
+| Thanh toán VNPay                | Trong chi tiết đơn: mở handoff backend HTTPS ở tab mới, kiểm tra kết quả có giới hạn; Order API là nguồn xác nhận đã thanh toán |
 | Xác nhận                       | Checkout mở chi tiết theo ID; URL xác nhận cũ bridge tới API detail, không render snapshot tài khoản trước          |
 | Hồ sơ                          | Thông tin thật của tài khoản, đăng xuất và xóa cache giỏ/báo giá khi đổi tài khoản                                  |
 
@@ -86,7 +152,7 @@ Mọi trang có trạng thái tải, rỗng hoặc lỗi phù hợp. Ảnh sản
 ## Điểm cần biết trước khi phát hành
 
 - Đây là storefront khách hàng, chưa phải dashboard quản trị.
-- Chưa thêm luồng VNPay/Stripe hosted checkout hoặc địa chỉ giao hàng. Lịch sử/chi tiết đơn đã có trong WEB-01, bắt buộc backend hỗ trợ hai API GET `/api/orders` và `/api/orders/{orderId}`.
+- Đã nối hosted handoff VNPay ở WEB-PAY-01 local; chưa có SIT VNPay thực tế, refund UI hoặc địa chỉ giao hàng. Backend phải hỗ trợ GET `/api/orders`, `/api/orders/{orderId}` và `/api/orders/{orderId}/payment` theo ownership. Không thêm Stripe UI.
 - Backend dev mặc định dùng payment provider `fake`; đơn QA có thể trả `PAID`. Điều này không chứng minh thanh toán thật đã hoạt động.
 - Backend hiện tạo đơn từ snapshot giỏ nhưng không tự dọn giỏ. UI giữ đúng trạng thái API; không tự gọi xóa toàn bộ giỏ sau đặt hàng vì có thể xóa thay đổi từ tab khác.
 - Cart/quote hiện chỉ cung cấp SKU/tên dòng hàng, chưa có ảnh hay product ID. Giỏ hiển thị biểu tượng thay vì suy đoán ảnh sản phẩm.
@@ -102,7 +168,7 @@ npm test
 npm run build
 ```
 
-`lint` kiểm tra TypeScript cho cả ứng dụng và cấu hình Vite, không sinh JS cạnh source hoặc sửa build artifact đang được Git theo dõi. Cache TypeScript của cấu hình nằm trong `node_modules/.tmp/`. `test` chạy 26 kiểm tra (6 session/cache, 12 trạng thái URL/phân trang/giá của PLP và 8 motion/cleanup) bằng Node built-in test runner và TypeScript hiện có, không thêm dependency. `build` chạy cả TypeScript và test trước khi tạo `dist/`.
+`lint` kiểm tra TypeScript cho cả ứng dụng và cấu hình Vite, không sinh JS cạnh source hoặc sửa build artifact đang được Git theo dõi. Cache TypeScript của cấu hình nằm trong `node_modules/.tmp/`. `test` dùng Node built-in test runner để kiểm PLP/motion/session, UI payment và build environment; số test của từng lần nghiệm thu nằm trong biên bản. `build` chạy cả TypeScript và test trước khi tạo `dist/`. Dùng Node>=20 (CI/Docker dùng22); `npm ci` theo lockfile, không fallback sang npm install khi lockfile lỗi.
 
 Khi dùng Dockerfile hiện có, tài nguyên mới trong `public/` được đưa vào image qua Vite build. Nếu đưa `dist/` lên S3/CloudFront, cần SPA fallback về `index.html` và cấu hình API/CORS đúng trước khi build. Không cần chạy React dev server trong production.
 
@@ -162,7 +228,9 @@ kiểm tra bằng unit test; chưa có hơn 12 sản phẩm để nghiệm thu p
 trang trên API thật. Reduced motion được kiểm tra trong source, chưa mô phỏng
 thiết lập OS/trình duyệt. Đây không phải chứng nhận WCAG hay kiểm thử bảo mật.
 
-Nhánh review PLP là `codex/shop-ui-product-listing`; chưa merge main hoặc deploy.
+Ở mốc bàn giao PLP16/10, nhánh review là `codex/shop-ui-product-listing`;
+trạng thái release hiện hành được theo dõi tại UI-REL-01/PR, không lấy mốc cũ
+làm bằng chứng main hiện tại chưa có PLP. Deploy AWS vẫn là bước riêng.
 Chạy `npm run dev`, mở
 `http://localhost:5173/products` với backend như hướng dẫn ở trên. Preview QA
 riêng nếu đang chạy là `http://127.0.0.1:5174/products`.
@@ -261,3 +329,65 @@ Kiểm thử local bằng backend thật và MinIO, với schema `shop_ui_qa_202
 - Checkout QA provider fake tạo đơn 2 dòng/3 sản phẩm, 5.570.000 VND; trang mới đọc lại từ server và reload được. Không thực hiện thanh toán thật hoặc tự dọn giỏ.
 - Desktop 1440/mobile 390 không tràn ngang. 6 test session/cache và TypeScript/Vite build đạt; backend full regression 418 test đạt. Chưa xác nhận CI/deploy.
 - UI và backend cần release tương thích: backend mới trước UI. Rollback về artifact trước của từng project, không xóa dữ liệu đơn hoặc reset worktree.
+
+## WEB-PAY-01 — UI VNPay, 19/10/2026
+
+Trang `/orders/:orderId` có panel thanh toán từ API riêng tư
+`GET /api/orders/{orderId}/payment`. Nút VNPay chỉ hiện khi đơn `PENDING`,
+provider `VNPAY`, attempt `REQUIRES_ACTION` và URL qua kiểm tra an toàn.
+Link phải là HTTPS/443, exact origin trong allowlist, đúng path
+`/api/payments/checkout/vnpay/start`, UUID trùng attempt và token 128 ký tự hex;
+không chấp nhận userinfo, fragment, query thừa hoặc hostname gần giống.
+Tab thanh toán dùng `noopener noreferrer`. Không lưu URL này vào localStorage,
+analytics hay log; cache payment riêng tư được bỏ khi rời trang/đổi phiên.
+
+Order API là nguồn xác nhận: provider `SUCCEEDED` nhưng đơn còn `PENDING`
+vẫn là “Đang xác nhận đơn hàng”. Query/flag trên URL không xác nhận thanh toán.
+Trang không tạo lại đơn/attempt, không tự dọn giỏ và không tự đổi trạng thái tiền.
+Mỗi đợt tự kiểm tra tối đa 12 payment GET trong 60 giây, không polling nền,
+không tự retry lỗi auth/mạng/429/5xx. Chỉ lỗi chưa có attempt (404/code 1407)
+được chờ tiếp. Nút “Kiểm tra thanh toán” mở đợt đọc mới có giới hạn.
+
+### Cấu hình và đóng gói
+
+Thiết lập `VITE_PAYMENT_ALLOWED_ORIGINS` **trước khi build**, bằng đúng
+`VNPAY_PUBLIC_BASE_URL` của backend. Ví dụ `https://api.example.com` là
+placeholder, không phải endpoint đã deploy. Nếu UI/backend cùng domain,
+allowlist vẫn phải ghi origin HTTPS thật một cách tường minh.
+Restart Vite khi đổi `.env.local`; build lại bundle khi đổi origin production.
+Không thể truyền biến này chỉ bằng `docker run --env-file` sau khi đã build SPA.
+Dockerfile đã nhận build argument công khai tương ứng:
+
+```sh
+docker build --build-arg VITE_PAYMENT_ALLOWED_ORIGINS=https://api.example.com -t shop-ui:local-vnpay .
+```
+
+Lệnh trên là hướng dẫn build, không phải bằng chứng image UI đã được build/push.
+`npm run build` tạo `dist/`; bundle UI độc lập với JAR/image backend đã có.
+Rollback bằng bundle/image UI trước đó, không migration hoặc sửa dữ liệu tiền.
+
+### Kiểm thử có thể chạy lại, không dùng merchant thật
+
+```powershell
+# Terminal 1: API giả lập chỉ bind loopback, không DB hoặc cổng thanh toán.
+node tests/fixtures/payment-api.mjs
+# Terminal 2: Vite QA, không đổi .env.local của người dùng.
+$env:VITE_DEV_API_TARGET='http://127.0.0.1:4192'
+$env:VITE_PAYMENT_ALLOWED_ORIGINS='https://api.example.test'
+npm run dev -- --host 127.0.0.1 --port 5176 --strictPort
+```
+
+Mở `http://127.0.0.1:4192/__qa`, dùng tài khoản fixture ghi trên trang.
+Đóng mọi trang/iframe QA trước khi reset bộ đếm và đo một chu kỳ mới; không
+sửa source giữa lượt đo vì HMR/remount có thể tạo chu kỳ khác. Khung mobile
+375×812 và landscape 812×375 là kiểm tra CSS responsive, không giả làm thiết bị thật.
+Đây chỉ là API fixture cho chi tiết đơn, không phải môi trường kiểm thử cả cửa hàng.
+
+- TypeScript, **59/59 Node test** (33 test payment/API/session mới) và Vite production build đạt; diff check không có lỗi whitespace. Không thêm dependency hoặc đổi lockfile.
+- Browser đã kiểm tra ready, missing attempt, provider success/Order pending, Order paid, link giả mạo và lỗi 503. URL giả `vnp_ResponseCode=00&status=PAID` không đổi trạng thái đơn. Link đúng có `_blank`, `noopener noreferrer`, cao 48px; link sai không còn CTA.
+- Chu kỳ QA mới duy nhất, không HMR/iframe/request cũ: 12 GET rồi UI dừng tự kiểm tra. Không reset counter khi chu kỳ cũ còn chạy để tránh trộn số đo giữa các lượt.
+- Đã kiểm tra sáng/tối; desktop CSS viewport thực tế 1265px, responsive frame 375px (client 360px) và 812px (client 797px) không tràn ngang; kiểm tra nút bằng bàn phím. Viewport override của trình duyệt không áp dụng lên tab hiện tại, nên dùng iframe có kích thước thật để kiểm tra CSS, không báo đã test viewport 1440px.
+- Panel không thêm animation, dùng semantic token và focus sẵn có; review reduced-motion CSS và các test motion cũ đạt. Chưa mô phỏng preference giảm chuyển động cấp OS/browser, không chứng nhận WCAG/performance từ smoke này.
+- Backend/source/schema/image không đổi trong task UI. Bằng chứng backend trước vẫn là 537 test, line 91,17%, branch 70,20%; **không đạt mục tiêu cuối dự án branch >80%**, không lấy test UI để tăng số này.
+- Chưa gọi VNPay thật, chưa có SIT/IPN public, refund/reconciliation hoặc UI return page. Backend return hiện trả JSON ở tab mới; khách giữ tab đơn để kiểm tra. API chưa có `expiresAt`, nên không tự đoán countdown; backend enforce hạn link và việc tạo attempt mới là task khác.
+- Chưa commit/push/merge/CI/deploy; `.agents/` có sẵn không thuộc thay đổi ứng dụng. Còn các rủi ro dependency và các gate phát hành đã ghi phía trên, không coi local build là production sign-off.

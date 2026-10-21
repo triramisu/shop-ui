@@ -198,6 +198,24 @@ export interface OrderSnapshotResponse {
   items: OrderItemSnapshotResponse[];
 }
 
+export type PaymentStatus =
+  | 'CREATED'
+  | 'PENDING'
+  | 'REQUIRES_ACTION'
+  | 'UNKNOWN'
+  | 'SUCCEEDED'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'EXPIRED';
+
+/** Read-only projection; neither the URL nor provider status confirms an order. */
+export interface OrderPaymentResponse {
+  paymentAttemptId: string;
+  providerCode: string;
+  status: PaymentStatus;
+  actionUrl: string | null;
+}
+
 export interface OrderSummaryResponse {
   id: string;
   status: OrderStatus;

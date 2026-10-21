@@ -39,6 +39,8 @@ export interface RequestOptions {
   headers?: Record<string, string>;
   /** Endpoint công khai: không gắn token, không thử refresh. */
   auth?: boolean;
+  /** Read-only payment polling stops on 401 instead of replaying the request. */
+  retryAuth?: boolean;
   /** Query string. */
   query?: Record<string, string | number | boolean | undefined | null>;
   signal?: AbortSignal;
@@ -158,7 +160,13 @@ async function send<T>(
 
   assertCurrentSession();
   // 401 khi đang dùng auth: thử refresh và phát lại đúng một lần.
-  if (res.status === 401 && useAuth && retry && getSession()) {
+  if (
+    res.status === 401 &&
+    useAuth &&
+    retry &&
+    opts.retryAuth !== false &&
+    getSession()
+  ) {
     const ok = await refreshAccessToken();
     assertCurrentSession();
     if (ok) return send<T>(path, opts, false);

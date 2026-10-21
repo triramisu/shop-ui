@@ -3,10 +3,13 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci || npm install
+RUN npm ci
 COPY . .
 # VITE_API_BASE_URL mặc định "/api" (cùng origin qua edge nginx) — không cần
 # nhúng URL tuyệt đối vào bundle.
+ARG VITE_PAYMENT_ALLOWED_ORIGINS="https://aydibro.click"
+# Public origin allowlist, not a merchant key. Vite reads it at build time.
+ENV VITE_PAYMENT_ALLOWED_ORIGINS=${VITE_PAYMENT_ALLOWED_ORIGINS}
 RUN npm run build
 
 # ---- Edge nginx phục vụ SPA + proxy API ----
