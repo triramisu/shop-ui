@@ -101,8 +101,8 @@ Proxy chỉ có trong tiến trình dev đó. Không dùng localhost/port5184 l�
 API production. Kết thúc QA bằng Ctrl+C trong terminal đã mở, không kill các
 Node process khác. Production build vẫn giữ API same-origin `/api`.
 
-Đây là **bản sửa local**, chưa phải thay đổi trên aydibro.click. Sau review/
-commit/PR/required checks/merge riêng, build đúng source phát hành rồi upload
+Nguồn đã merge/CI main đạt theo biên bản bên dưới, **chưa deploy lên
+aydibro.click**. Bước phát hành tiếp theo: build đúng main đã kiểm chứng rồi upload
 **nội dung bên trong dist/** vào UI bucket private hiện hữu. Không upload repo,
 node_modules, file env hoặc một thư mục dist lồng thêm; không bật public S3.
 Sau upload index.html/assets, thực hiện invalidation CloudFront theo runbook
@@ -111,3 +111,34 @@ là thao tác riêng, chưa thực hiện trong task này. Không redeploy backe
 
 Rollback bằng artifact UI trước nếu phát hiện regression. Không reset toàn
 worktree, sửa DB/category, tắt auth hoặc thay origin CloudFront để chữa active.
+
+## Nghiệm thu nguồn main — 22/10/2026
+
+- Commit task `8b5c8bf632cbf6c011d61a2fe970a7e3b741873c` chỉ có7 file đã review:
+  link/Navbar/CSS/test, README, biên bản này và tài liệu DNS có sẵn. Không
+  `.agents/`, secret, env local, dist/node_modules hoặc source backend.
+- [PR #3](https://github.com/triramisu/shop-ui/pull/3) có
+  [CI PR](https://github.com/triramisu/shop-ui/actions/runs/39753274440)
+  verify/dependency-review success trên đúng head; không review thread chưa
+  giải quyết hoặc request-changes. Không tạo approval giả, tắt check/protection
+  hoặc dùng kết quả commit cũ. GitHub connector chỉ có quyền đọc, tạo PR trả403;
+  đã dùng phiên GitHub của chủ repo đang đăng nhập, không lấy token/đổi quyền.
+- Merge lúc16:10:48 (UTC+7), commit
+  `cd9ec8602938e2d5b465da954a4bf94b06a5047b`.
+  [CI push main](https://github.com/triramisu/shop-ui/actions/runs/39753409599)
+  Success: verify trên Node22 có75 tests, fail0/skip0, TypeScript/Vite build và
+  audit0. Dependency-review skipped có chủ đích trên push; không gọi skipped
+  là một lượt dependency review mới. Log đã đối chiếu riêng với PR checks.
+- Sau CI main đạt: fetch, switch main, pull --ff-only; HEAD=origin/main đúng
+  merge commit. Chạy lại npm ci/build/audit trên main:75/75,0 skip/audit0;
+  dist tạo từ nguồn main, không lấy bundle feature cũ làm bằng chứng.
+- Dọn đúng `codex/shop-ui-nav-active` local/remote sau khi kiểm ancestry và
+  remote head vẫn là commit đã merge. Không xóa nhánh cũ khác hoặc `.agents/`.
+- Bổ sung hậu kiểm README trên nhánh tài liệu riêng, vẫn qua PR/checks/CI.
+  Bằng chứng trên áp dụng commit chức năng, không tự nhận commit tài liệu
+  tương lai đã qua gate. Không push thẳng main để ghi tiến độ.
+
+**Điểm dừng:** hoàn tất nguồn UI-NAV-01 vào main, chưa upload S3/invalidation,
+đổi DNS/AWS/backend/payment hoặc nghiệm thu người mua/VNPay SIT. Lần phát hành
+bundle phải giữ artifact trước, kiểm URL category/All/Back/reload và API same-
+origin sau cache refresh; không coi Git merge là website đã cập nhật.

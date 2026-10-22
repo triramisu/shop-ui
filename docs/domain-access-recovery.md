@@ -184,5 +184,8 @@ thật, tạo order, thanh toán hay tự thêm sản phẩm vào prod để smo
   go-live hay chứng nhận bảo mật toàn bộ dự án. Catalog hiện chưa có sản phẩm.
 - Guard cũ và durable CloudTrail cần nhiệm vụ riêng; không tự bật dịch vụ tính
   phí hoặc đổi WAF Count thành Block trong đợt sửa truy cập này.
-- Tài liệu DNS-01 hiện ở nhánh local `codex/shop-ui-domain-access`; chưa tự
-  commit/push/merge. Code release main và bundle đã upload không bị thay đổi.
+- Lúc kết thúc DNS-01, tài liệu mới nằm trên nhánh local. Sau đó đã được
+  review/xuất bản cùng [PR UI #3](https://github.com/triramisu/shop-ui/pull/3)
+  ngày22/10/2026 để README không thiếu hướng dẫn; không chạy lại DNS hoặc
+  upload bundle khi xuất bản tài liệu. Các trạng thái catalog rỗng/allowlist
+  ở biên bản DNS-01 là lịch sử; đối chiếu cập nhật đầu file và README hiện hành.
