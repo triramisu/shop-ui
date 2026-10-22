@@ -105,10 +105,17 @@ q/sort/page/view không làm mất lựa chọn. Không còn NavLink chỉ khớ
 cho liên kết Tất cả sản phẩm. TypeScript +75/75 test (8 regression mới) +Vite
 production build đạt. Browser local đã kiểm đổi danh mục, Back/reload và theme
 tối; không thay backend/API/schema hoặc dữ liệu DEMO.
-Code ở nhánh `codex/shop-ui-nav-active`; đang thực hiện quy trình commit/PR/
-required checks/merge theo yêu cầu tiếp tục phát hành của chủ repo.
-`D:/shop-ui/dist` đã build lại; website S3/CloudFront vẫn dùng bundle trước
-cho đến khi phát hành UI mới. Xem [nguyên nhân, gate và cách đưa bản sửa lên web](docs/catalog-navigation-active.md).
+Đã merge qua [PR #3](https://github.com/triramisu/shop-ui/pull/3) lúc16:10:48
+ngày22/10/2026 (UTC+7), merge commit `cd9ec8602938e2d5b465da954a4bf94b06a5047b`.
+[CI PR](https://github.com/triramisu/shop-ui/actions/runs/39753274440) có verify
+và dependency-review success trên head `8b5c8bf`; [CI merge commit main](https://github.com/triramisu/shop-ui/actions/runs/39753409599)
+cũng Success: Node22/75 test,0 fail/skip, build và audit0; dependency-review
+skipped đúng điều kiện push. Đã fast-forward main local=origin/main, chạy lại
+npm ci/build/audit đạt và dọn đúng nhánh task đã merge; `.agents/` giữ nguyên.
+Tài liệu ghi nhận sau nghiệm thu cũng được đưa qua PR/checks, không push main.
+`D:/shop-ui/dist` đã build từ main; **chưa upload bundle mới lên S3 hoặc
+invalidation CloudFront**, nên website vẫn dùng bundle trước. Xem
+[nguyên nhân, bằng chứng, gate và bước phát hành](docs/catalog-navigation-active.md).
 
 Bạn có thể build từ main theo lệnh bên dưới. Kết quả ở `D:/shop-ui/dist` nếu
 clone/build tại đường dẫn này. Nhiệm vụ UI-REL-01 chỉ nghiệm thu nguồn release,
