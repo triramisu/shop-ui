@@ -473,6 +473,10 @@ h3 {
 .mobile-navigation {
   display: none;
 }
+.mobile-navigation > a.active {
+  color: var(--color-brand);
+  font-weight: 600;
+}
 .hero-section {
   display: grid;
   grid-template-columns: 0.86fr 1.14fr;
