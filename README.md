@@ -10,6 +10,21 @@ không đồng nghĩa đã upload AWS, bật provider thanh toán hoặc nghiệ
 Xem [hợp đồng, gates và rollback](docs/main-release.md). Các mục theo ngày bên
 dưới là lịch sử bàn giao, không phải trạng thái publish hiện tại.
 
+Nghiệm thu nguồn phát hành ngày **21/10/2026**: [PR #1](https://github.com/triramisu/shop-ui/pull/1)
+đã merge PLP và UI payment vào commit chức năng `2f103a3` trên main.
+[CI của commit main](https://github.com/triramisu/shop-ui/actions/runs/39628199286)
+báo **Success**: TypeScript, **67/67 test**, build production và full dependency
+audit đạt, không có test bị bỏ qua. PR có cả verify/dependency-review đạt;
+dependency-review được skip có chủ ý trên event push main. Đã pull fast-forward
+và chạy lại `npm ci`, `npm run build`, audit trên main local thành công.
+Các commit ghi nhận tài liệu sau đó không thay đổi code ứng dụng.
+
+Bạn có thể build từ main theo lệnh bên dưới. Kết quả ở `D:/shop-ui/dist` nếu
+clone/build tại đường dẫn này. Chưa tự upload bundle, đổi DNS, deploy backend
+hoặc bật payment; UI chỉ gọi được API sau khi tuyến CloudFront `/api/*` và
+backend hoạt động. Nếu gặp lỗi API, kiểm tra Network/health backend; không
+sửa bundle để trỏ về localhost và không mở public S3/RDS để chữa lỗi.
+
 | Chạy lệnh | File public được Vite nạp | API trên trình duyệt | Proxy backend |
 |---|---|---|---|
 | npm run dev | .env.development | /api | localhost:8080, chỉ ở máy dev |
