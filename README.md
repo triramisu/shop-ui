@@ -12,8 +12,10 @@ job có AWS credential, không static access key hoặc quyền S3 delete.
 
 Chủ tài khoản đã duyệt OIDC/role đúng bốn quyền, repo/main và bật UI deploy.
 Đã tạo provider/role riêng, đọc lại policy và lưu hai repository variables;
-local đạt **89/89 test**, build, audit 0 vulnerability và actionlint. Đang
-thực hiện PR/gates, **chưa báo pipeline live đạt**. Cách cấu hình,
+local đạt **89/89 test**, build, audit 0 vulnerability và actionlint. PR #5 đã
+merge; main verify đạt nhưng OIDC bị từ chối vì subject immutable ID khác
+định dạng name-only ban đầu. Đang sửa trust theo CloudTrail; upload bị skip,
+**chưa báo pipeline live đạt**. Cách cấu hình,
 lệnh dùng lại, chi phí/giới hạn, khóa deploy và rollback:
 [runbook CI/CD UI](docs/ui-cicd.md). Những đoạn “chỉ CI/chưa CD” theo ngày bên
 dưới là baseline trước UI-CD-01, không phải quyết định hoãn yêu cầu mới này.

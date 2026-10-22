@@ -6,7 +6,7 @@
     "Action": "sts:AssumeRoleWithWebIdentity",
     "Condition": {"StringEquals": {
       "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-      "token.actions.githubusercontent.com:sub": "repo:triramisu/shop-ui:ref:refs/heads/main"
+      "token.actions.githubusercontent.com:sub": "repo:triramisu@200755440/shop-ui@1421523514:ref:refs/heads/main"
     }}
   }]
 }
