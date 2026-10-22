@@ -2,6 +2,71 @@
 
 React 18 + TypeScript + Vite, sử dụng API thật của Shop. Thiết kế riêng theo hướng editorial: nền kem, chữ đậm, màu đất nung, ảnh có khoảng thở và bố cục gọn. Không dùng layout/template của hai dự án tham khảo.
 
+## Quy trình từng nhiệm vụ UI — cùng quy trình backend
+
+README là nguồn tiến độ chính thức; đối chiếu thêm code, test, Git và CI đúng
+commit. Mỗi lượt chỉ làm một nhiệm vụ với hợp đồng tám phần: mục tiêu/phạm vi,
+sở hữu/đầu vào, luồng/bất biến, bảo mật/vận hành, đầu ra, ca kiểm thử, gate và
+phát hành/rollback. Không coi “build local đạt” là đã merge hoặc deploy.
+
+1. Đọc README/runbook, status/history và code/test liên quan; bảo toàn thay đổi
+   của người dùng. Bắt đầu nhánh task từ main đã đồng bộ, không sửa thẳng main.
+2. Review đúng phạm vi, chạy `npm ci`, TypeScript/full test/build, dependency
+   audit và diff/secret review. Không giảm assertion/severity để qua gate.
+3. Commit tiếng Việt, chỉ stage file đã review; push nhánh và mở PR vào main.
+   `.agents/`, secret, file env local, dist và node_modules không được commit.
+4. Chờ **verify + dependency-review** đạt trên head SHA mới nhất, review diff/
+   phản hồi rồi mới merge. Không force-push main, bypass protection hoặc merge
+   khi check pending/failed. Check của commit cũ không chứng minh head mới đạt.
+5. Chờ CI đúng merge commit trên main xanh; dependency-review có thể skipped
+   trên push vì chỉ chạy cho pull_request. Sau đó đồng bộ main local bằng
+   fast-forward, xác nhận HEAD=origin/main, build lại rồi mới dọn nhánh đã merge.
+6. Ghi PR/SHA/CI, số test, giới hạn và rollback vào README/runbook. Nếu cập nhật
+   tài liệu sau nghiệm thu cần commit mới, tài liệu cũng qua PR/CI, không push
+   thẳng main. Kết thúc nhiệm vụ; chỉ bắt đầu việc tiếp khi được yêu cầu.
+
+Lệnh mẫu chạy trong **PowerShell tại D:/shop-ui**, thay placeholder bằng nhánh/
+file của task thực tế. Kiểm tra status trước switch; nếu còn thay đổi chưa lưu,
+không reset hoặc switch đè. CLI GitHub chỉ dùng nếu đã cài và đăng nhập; có thể
+mở/review/merge PR trên GitHub bằng cùng các điều kiện trên.
+
+```powershell
+git status --short --branch
+git fetch origin --prune
+git switch main
+git pull --ff-only origin main
+git switch -c codex/ten-nhiem-vu
+npm ci
+npm run build
+npm audit --audit-level=moderate
+git diff --check
+git diff
+git add -- FILE_DA_REVIEW_1 FILE_DA_REVIEW_2
+git diff --cached --check
+git diff --cached
+git commit -m "Mô tả tiếng Việt rõ mục đích"
+git push -u origin codex/ten-nhiem-vu
+```
+
+Sau PR/required checks/merge và CI main đạt mới chạy phần đồng bộ này:
+
+```powershell
+git fetch origin --prune
+git switch main
+git pull --ff-only origin main
+git rev-parse HEAD
+git rev-parse origin/main
+npm ci
+npm run build
+npm audit --audit-level=moderate
+git branch -d codex/ten-nhiem-vu
+```
+
+Xóa nhánh remote qua nút Delete branch của PR hoặc lệnh Git sau khi kiểm nó
+không có commit chưa merge. Không xóa nhánh công việc khác. Nguồn đã merge
+không tự lên S3: upload/invalidation và browser smoke website là nhiệm vụ
+phát hành riêng, không tự đổi AWS/DNS/backend/payment khi chỉ merge UI.
+
 ## Build production cho CloudFront và S3 — UI-REL-01
 
 Nguồn phát hành là **main của repo UI**, không phải main backend. Release này
@@ -19,11 +84,38 @@ dependency-review được skip có chủ ý trên event push main. Đã pull fa
 và chạy lại `npm ci`, `npm run build`, audit trên main local thành công.
 Các commit ghi nhận tài liệu sau đó không thay đổi code ứng dụng.
 
+Hậu kiểm truy cập **22/10/2026 — DNS-01**: sau lần upload của chủ repo, đã
+thêm apex DNS tới CloudFront và bổ sung IP website qua CloudFormation.
+Domain thật trả 200 cho UI, JS/CSS và API catalog; S3 vẫn private. Catalog
+hiện trả 0 sản phẩm; tại bước DNS-01 website vẫn giới hạn IP, chưa nghiệm thu payment/go-live.
+Xem [hướng dẫn từng thao tác, chẩn đoán và rollback](docs/domain-access-recovery.md).
+**Cập nhật 08:34:11 ngày22/10 — AWS-PUBLIC-01:** sau approval riêng, đã chuyển
+CloudFormation ViewerAccessMode=public, bỏ allowlist IP website; SSH, S3/RDS,
+auth backend và WAF không bị mở rộng. API riêng tư không token vẫn401, S3 trực
+tiếp vẫn403; WAF hiện Count, chưa chặn flood. Không thay bundle hoặc bật payment.
+Tài liệu DNS này được review cùng đợt phát hành UI-NAV-01; không chạy lại các
+thao tác AWS/DNS khi xuất bản tài liệu. Những kết quả catalog rỗng phía trên
+là lịch sử DNS-01, không phải hiện trạng sau lần nạp DEMO.
+
+**UI-NAV-01 — sửa active danh mục,22/10/2026:** thanh điều hướng dùng chung
+`CatalogNavLink` cho desktop và mobile, lấy category từ URL bằng đúng parser
+của PLP. Chọn danh mục chỉ làm nổi bật danh mục đó; Tất cả sản phẩm chỉ active
+khi không có category hợp lệ. Thêm `aria-current=page` cho mục đang chọn;
+q/sort/page/view không làm mất lựa chọn. Không còn NavLink chỉ khớp pathname
+cho liên kết Tất cả sản phẩm. TypeScript +75/75 test (8 regression mới) +Vite
+production build đạt. Browser local đã kiểm đổi danh mục, Back/reload và theme
+tối; không thay backend/API/schema hoặc dữ liệu DEMO.
+Code ở nhánh `codex/shop-ui-nav-active`; đang thực hiện quy trình commit/PR/
+required checks/merge theo yêu cầu tiếp tục phát hành của chủ repo.
+`D:/shop-ui/dist` đã build lại; website S3/CloudFront vẫn dùng bundle trước
+cho đến khi phát hành UI mới. Xem [nguyên nhân, gate và cách đưa bản sửa lên web](docs/catalog-navigation-active.md).
+
 Bạn có thể build từ main theo lệnh bên dưới. Kết quả ở `D:/shop-ui/dist` nếu
-clone/build tại đường dẫn này. Chưa tự upload bundle, đổi DNS, deploy backend
-hoặc bật payment; UI chỉ gọi được API sau khi tuyến CloudFront `/api/*` và
-backend hoạt động. Nếu gặp lỗi API, kiểm tra Network/health backend; không
-sửa bundle để trỏ về localhost và không mở public S3/RDS để chữa lỗi.
+clone/build tại đường dẫn này. Nhiệm vụ UI-REL-01 chỉ nghiệm thu nguồn release,
+không tự upload bundle, đổi DNS, deploy backend hoặc bật payment. Hậu kiểm
+DNS-01 bên trên ghi nhận website/API sau lần upload của chủ repo. Nếu gặp lỗi
+API, kiểm tra Network/health backend; không sửa bundle để trỏ về localhost
+và không mở public S3/RDS để chữa lỗi.
 
 | Chạy lệnh | File public được Vite nạp | API trên trình duyệt | Proxy backend |
 |---|---|---|---|
@@ -69,7 +161,8 @@ cache, SPA fallback chỉ rewrite route UI, không đổi lỗi API thành index
 Sau upload cần kiểm cache/invalidation, mở trực tiếp `/products` rồi reload,
 kiểm tra Network có request `/api/catalog/products`, không localhost.
 Không chạy `npm run dev`/React server trên S3 và không cần Docker UI cho mô
-hình S3/CloudFront này. Việc upload/DNS/invalidation chưa tự chạy trong task.
+hình S3/CloudFront này. Nhiệm vụ UI-REL-01 không tự chạy upload/DNS/invalidation;
+DNS-01 ở trên ghi nhận riêng đợt sửa truy cập sau upload.
 
 React Router được nâng lên7.18.4 để xử lý hai moderate runtime advisory;
 giữ React18/BrowserRouter và kiểm regression auth/navigation. CI mới chỉ

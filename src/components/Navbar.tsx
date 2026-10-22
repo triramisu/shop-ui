@@ -7,6 +7,7 @@ import { catalogApi } from '@/api/catalog';
 import { useTheme } from '@/lib/useTheme';
 import { useSaved } from '@/lib/saved';
 import { Icon } from './Icon';
+import { CatalogNavLink } from './CatalogNavLink';
 
 export function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
@@ -135,14 +136,14 @@ export function Navbar() {
               <NavLink to="/" end>
                 Khám phá
               </NavLink>
-              <NavLink to="/products">Tất cả sản phẩm</NavLink>
+              <CatalogNavLink>Tất cả sản phẩm</CatalogNavLink>
               {categories.data?.slice(0, 4).map((category) => (
-                <Link
+                <CatalogNavLink
                   key={category.id}
-                  to={`/products?category=${category.id}`}
+                  categoryId={category.id}
                 >
                   {category.name}
-                </Link>
+                </CatalogNavLink>
               ))}
             </nav>
             <Link
@@ -170,11 +171,11 @@ export function Navbar() {
               </button>
             </form>
             <Link to="/">Trang chủ</Link>
-            <Link to="/products">Tất cả sản phẩm</Link>
+            <CatalogNavLink>Tất cả sản phẩm</CatalogNavLink>
             {categories.data?.map((category) => (
-              <Link key={category.id} to={`/products?category=${category.id}`}>
+              <CatalogNavLink key={category.id} categoryId={category.id}>
                 {category.name}
-              </Link>
+              </CatalogNavLink>
             ))}
             <Link to="/saved">Sản phẩm đã lưu ({saved.length})</Link>
             {isAuthenticated && <Link to="/orders">Đơn hàng của tôi</Link>}
