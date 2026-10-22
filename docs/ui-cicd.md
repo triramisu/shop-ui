@@ -167,7 +167,8 @@ durable audit. OIDC trust của role mới không giải quyết các finding c�
 
 ## Bằng chứng và trạng thái
 
-Đã thực hiện ngày 22/10/2026 (UTC+7), chưa kết luận OIDC/deploy live đạt:
+Đã thực hiện ngày 22/10/2026 (UTC+7); các bước dưới ghi lịch sử preflight.
+Kết quả deploy thật nằm ở phần nghiệm thu sau chẩn đoán:
 
 - Baseline main `023fb6e`; branch `codex/shop-ui-s3-cicd`, không trộn backend.
 - Local: npm ci, npm run build (**89/89 test**, TypeScript, Vite), npm audit
@@ -189,7 +190,7 @@ durable audit. OIDC trust của role mới không giải quyết các finding c�
   role nói trên (**20:40**), UI_DEPLOY_ENABLED=true (**20:41**). Không tạo AWS
   access key/repository secret. Chưa merge nên chưa có deploy job live mới.
 
-Hậu kiểm PR/SHA/CI và lần phát hành thật được ghi khi có kết quả.
+Không dùng bằng chứng preflight bên trên để thay kết quả phát hành thật bên dưới.
 
 ### Chẩn đoán lần deploy đầu — chưa upload
 
@@ -215,8 +216,60 @@ rerun; không sửa subject setting của GitHub để che lỗi. Với dự án
 --policy-document file://deploy/aws/github-trust.json --profile shop-prod
 --region ap-southeast-1` sau validate, rồi get-role đọc lại khớp toàn bộ trust
 JSON mới. Không managed policy, permission file không đổi; local regression
-89/89/build/audit0/diff-check đạt lại. Đang đưa sửa chữa qua PR, không rerun
+89/89/build/audit0/diff-check đạt lại. Sửa chữa được đưa qua PR #6, không rerun
 commit cũ hoặc khẳng định deploy trước khi có main run mới đạt.
+
+### Nghiệm thu phát hành thật — 20:52 ngày 22/10/2026
+
+- [PR #6](https://github.com/triramisu/shop-ui/pull/6), head
+  `7d68cc5d14d25f55a990954d4f07ce8cefaaf789`, hai checks
+  [run39790389922](https://github.com/triramisu/shop-ui/actions/runs/39790389922)
+  đạt, deploy skipped đúng chính sách PR; không có review/thread chưa xử lý.
+  Merge lúc **20:51:18**, commit `1e5e9a9dd9c5281ba60bc27eb9b4516795b31633`.
+- [Main run39790572474](https://github.com/triramisu/shop-ui/actions/runs/39790572474)
+  **Success**, verify20 giây/deploy49 giây; verify89/89 test, audit0. Artifact
+  gắn đúng commit/run, digest
+  `c54f5d779c7f637e961e02061eb259d492ee4960d52f73b52080647dd3a254d4`.
+  dependency-review skipped ở push sau khi đã đạt trên PR.
+- OIDC/AssumeRole thật đạt, không static key. Upload chỉ UI bucket bằng
+  bốn quyền đã duyệt; không dùng quyền admin laptop để upload thay cho pipeline.
+- Invalidation **I59D20UTMN1DC2O6D00H33UIYN**, tạo **20:52:06**, đường dẫn `/*`,
+  CallerReference `shop-ui-1e5e9a9dd9c5281ba60bc27eb9b4516795b31633-39790572474-1`.
+  Wait và get-invalidation độc lập đều xác nhận **Completed**.
+- Job summary lúc **20:52:31**: deployed=true, đúng commit; viewer=true,
+  index-referenced assets=2, catalog=true, anonymousDenied=true. Independent
+  HTTPS GET: release.json200 đúng commit, /products200 hash khớp marker;
+  public catalog200/code1000/totalElements12, my-info401/code1006, không gửi token.
+- Browser domain thật: category “DEMO — Tai nghe không dây” có4 sản phẩm và
+  duy nhất link này có active/aria-current=page; All chỉ active All, Back và
+  reload deep link giữ đúng danh mục. Không login/tạo đơn/đổi account để smoke.
+- S3 readback: bốn PublicAccessBlock=true, AES256, versioning Enabled. Không
+  sửa bucket policy, product image bucket, app stack, DB, DNS, SSH/ASG hay payment.
+- Main local fast-forward bằng git pull --ff-only, HEAD=origin/main ở commit
+  phát hành trên. Tài liệu hậu kiểm cũng qua PR/CI; commit tài liệu trên main
+  vẫn kích hoạt CD và release.json sẽ đổi SHA dù bundle UI không đổi. Luôn lấy
+  SHA/run mới nhất từ Actions/release marker, không coi SHA lịch sử là bản mới nhất.
+
+### Quy trình sử dụng từ lần sau
+
+1. Ở D:/shop-ui, đọc README/status, tạo nhánh task từ main đã đồng bộ. Sửa UI
+   rồi chạy npm ci, npm run build, npm audit --audit-level=moderate và diff-check.
+2. Commit tiếng Việt, push nhánh, mở PR main; chờ verify/dependency-review
+   trên head SHA mới nhất. Không bỏ qua PR hoặc push source thẳng lên S3.
+3. Merge sau gate/review; mở Actions → CI của merge commit. verify phải xanh
+   trước deploy; deploy phải xanh và summary deployed=true, không chỉ skipped.
+4. Trình duyệt mở https://aydibro.click; nếu tab giữ bundle cũ thì reload.
+   Kiểm release.json commit trùng main run vừa deploy, không dùng localhost.
+5. Không cần giữ laptop/Termius mở cho UI CD. GitHub runner lấy phiên OIDC tạm,
+   upload dist và invalidation; backend không tự được build/deploy theo UI.
+6. Khi fail, dùng mục chẩn đoán/rollback, không mở thêm quyền theo phỏng đoán.
+   Tắt cờ UI_DEPLOY_ENABLED=false nếu muốn dừng phát hành tiếp; bật lại true
+   rồi workflow_dispatch main để build mới khi đã xử lý nguyên nhân.
+
+Nghiệm thu này chỉ UI-CD-01. WAF vẫn Count, 34 finding Guard và durable
+CloudTrail chưa giải quyết; anonymous401 không thay kiểm quyền USER/ownership.
+Nhiệm vụ kế tiếp nên là nghiệm thu USER/auth/ownership xuyên UI/API, tách task
+riêng và không tạo account mật khẩu chung trên website public.
 
 Nguồn chính thức: [GitHub OIDC với AWS](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws),
 [S3 sync](https://docs.aws.amazon.com/cli/latest/reference/s3/sync.html),
