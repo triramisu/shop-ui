@@ -2,6 +2,22 @@
 
 React 18 + TypeScript + Vite, sử dụng API thật của Shop. Thiết kế riêng theo hướng editorial: nền kem, chữ đậm, màu đất nung, ảnh có khoảng thở và bố cục gọn. Không dùng layout/template của hai dự án tham khảo.
 
+## CI/CD UI — UI-CD-01
+
+Theo yêu cầu mới ngày 22/10/2026, bổ sung CD UI vào workflow GitHub hiện có:
+PR giữ verify/dependency-review; main sau verify build artifact sẽ dùng OIDC
+upload **dist/** lên S3 UI private rồi invalidation CloudFront `/*`, chờ
+Completed và kiểm HTTPS/UI/API. Không dùng `build/`, không npm install trong
+job có AWS credential, không static access key hoặc quyền S3 delete.
+
+Chủ tài khoản đã duyệt OIDC/role đúng bốn quyền, repo/main và bật UI deploy.
+Đã tạo provider/role riêng, đọc lại policy và lưu hai repository variables;
+local đạt **89/89 test**, build, audit 0 vulnerability và actionlint. Đang
+thực hiện PR/gates, **chưa báo pipeline live đạt**. Cách cấu hình,
+lệnh dùng lại, chi phí/giới hạn, khóa deploy và rollback:
+[runbook CI/CD UI](docs/ui-cicd.md). Những đoạn “chỉ CI/chưa CD” theo ngày bên
+dưới là baseline trước UI-CD-01, không phải quyết định hoãn yêu cầu mới này.
+
 ## Quy trình từng nhiệm vụ UI — cùng quy trình backend
 
 README là nguồn tiến độ chính thức; đối chiếu thêm code, test, Git và CI đúng
@@ -63,9 +79,10 @@ git branch -d codex/ten-nhiem-vu
 ```
 
 Xóa nhánh remote qua nút Delete branch của PR hoặc lệnh Git sau khi kiểm nó
-không có commit chưa merge. Không xóa nhánh công việc khác. Nguồn đã merge
-không tự lên S3: upload/invalidation và browser smoke website là nhiệm vụ
-phát hành riêng, không tự đổi AWS/DNS/backend/payment khi chỉ merge UI.
+không có commit chưa merge. Không xóa nhánh công việc khác. Từ UI-CD-01,
+main đã verify sẽ tự upload/invalidation khi `UI_DEPLOY_ENABLED=true`;
+phải kiểm deploy job và website thật trước khi kết luận đã phát hành.
+Không tự đổi DNS/backend/payment khi merge UI.
 
 ## Build production cho CloudFront và S3 — UI-REL-01
 

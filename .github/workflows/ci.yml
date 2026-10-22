@@ -11,7 +11,8 @@ permissions:
 
 concurrency:
   group: shop-ui-ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Never interrupt a running main upload after it has changed index.html.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify:
@@ -29,6 +30,19 @@ jobs:
       - run: npm run build
       - name: Audit runtime and build dependency trees
         run: npm audit --audit-level=moderate
+      - name: Bind production artifact to the verified commit
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: node scripts/ui-deploy.mjs prepare
+      - name: Keep the verified production bundle
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: shop-ui-${{ github.sha }}-${{ github.run_id }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+          include-hidden-files: false
+          overwrite: true
 
   dependency-review:
     if: github.event_name == 'pull_request'
@@ -41,3 +55,52 @@ jobs:
       - uses: actions/dependency-review-action@05fe4576374b728f0c523d6a13d64c25081e0803 # v4.8.3
         with:
           fail-on-severity: moderate
+
+  deploy:
+    if: >-
+      github.repository == 'triramisu/shop-ui' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      vars.UI_DEPLOY_ENABLED == 'true'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+      AWS_RETRY_MODE: standard
+      AWS_MAX_ATTEMPTS: '3'
+      AWS_PAGER: ''
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: shop-ui-${{ github.sha }}-${{ github.run_id }}
+          path: dist/
+          digest-mismatch: error
+      - name: Validate artifact, approved role and latest main before requesting AWS credentials
+        id: preflight
+        run: node scripts/ui-deploy.mjs preflight
+      - name: Assume the UI-only deployment role using OIDC
+        if: steps.preflight.outputs.deploy == 'true'
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6, dereferenced tag
+        with:
+          role-to-assume: ${{ steps.preflight.outputs.role }}
+          aws-region: ${{ steps.preflight.outputs.region }}
+          allowed-account-ids: ${{ steps.preflight.outputs.account }}
+          role-session-name: shop-ui-${{ github.run_id }}
+          role-duration-seconds: 1800
+          mask-aws-account-id: true
+          unset-current-credentials: true
+          retry-max-attempts: 3
+          action-timeout-s: 120
+      - name: Upload assets then index, invalidate, wait and smoke the website
+        if: steps.preflight.outputs.deploy == 'true'
+        run: node scripts/ui-deploy.mjs publish

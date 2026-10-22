@@ -1,0 +1,9 @@
+{
+  "accountId": "233377400170",
+  "region": "ap-southeast-1",
+  "bucket": "shop-aydibro-prod-uibucket-muvncutg3vyi",
+  "distributionId": "E1VK6HT0PA7A35",
+  "origin": "https://aydibro.click",
+  "repository": "triramisu/shop-ui",
+  "roleArn": "arn:aws:iam::233377400170:role/shop-ui-github-deploy"
+}
