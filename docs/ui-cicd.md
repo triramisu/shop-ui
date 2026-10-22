@@ -114,7 +114,13 @@ account. Session1800 giây; job timeout20 phút và request retry hữu hạn.
    ARN là metadata, không phải credential. Không tạo AWS_ACCESS_KEY_ID/
    AWS_SECRET_ACCESS_KEY. Trust subject đang dùng main ref; không tự thêm
    GitHub Environment vì nó đổi OIDC sub. Nếu cần environment approvals, phải
-   review trust/env branch restrictions cùng nhau. Giữ bảo vệ main và PR checks;
+   review trust/env branch restrictions cùng nhau. Repo này dùng immutable
+   subject (đã đối chiếu CloudTrail):
+   `repo:triramisu@200755440/shop-ui@1421523514:ref:refs/heads/main`.
+   GitHub áp dụng định dạng có owner/repository ID cho repo mới sau 15/07/2026
+   hoặc đã opt-in; không sao chép name-only subject cho mọi dự án. Kiểm repo ID,
+   owner ID và subject thực tế; giữ StringEquals, không sửa thành wildcard khi
+   gặp AccessDenied. Giữ bảo vệ main và PR checks;
    ai có thể thay workflow trên main có thể sử dụng quyền upload UI này.
 5. Merge PR workflow sau verify/dependency-review xanh; push main sẽ verify rồi
    deploy. Trước khi merge, cờ true không thể deploy code feature vì workflow/
@@ -184,6 +190,33 @@ durable audit. OIDC trust của role mới không giải quyết các finding c�
   access key/repository secret. Chưa merge nên chưa có deploy job live mới.
 
 Hậu kiểm PR/SHA/CI và lần phát hành thật được ghi khi có kết quả.
+
+### Chẩn đoán lần deploy đầu — chưa upload
+
+[PR #5](https://github.com/triramisu/shop-ui/pull/5) head `ccc90c7`, PR run
+[39789243526](https://github.com/triramisu/shop-ui/actions/runs/39789243526)
+verify/dependency-review đạt, 89/89 test/audit0; không có review thread mở.
+Merge **20:44:48** thành `81a01ca04e0e462852fcc043ebc515e40c92d7ce`.
+[Main run 39789582445](https://github.com/triramisu/shop-ui/actions/runs/39789582445)
+verify/build/artifact đạt, nhưng AssumeRoleWithWebIdentity AccessDenied; bước
+upload/invalidation/smoke **skipped**, không được coi deploy thành công.
+
+CloudTrail Singapore lúc **20:45:22–23** ghi principal có subject immutable
+`repo:triramisu@200755440/shop-ui@1421523514:ref:refs/heads/main`, khác trust
+name-only đã tạo. Không phải thiếu S3/CloudFront permission hay cần access key.
+Chỉ đọc eventTime/error/principal/provider, không dump token/request credential.
+Sửa duy nhất giá trị StringEquals sub trong trust và test regression; bốn
+permission và provider/audience/nhánh vẫn giữ nguyên. Đây là sửa identity đúng
+repo đã được duyệt, không mở quyền repo khác. Validate/readback trust trước
+rerun; không sửa subject setting của GitHub để che lỗi. Với dự án khác phải
+đọc định dạng subject hiện hành từ tài liệu/CloudTrail trước khi tạo role.
+
+Đã chạy `aws iam update-assume-role-policy --role-name shop-ui-github-deploy
+--policy-document file://deploy/aws/github-trust.json --profile shop-prod
+--region ap-southeast-1` sau validate, rồi get-role đọc lại khớp toàn bộ trust
+JSON mới. Không managed policy, permission file không đổi; local regression
+89/89/build/audit0/diff-check đạt lại. Đang đưa sửa chữa qua PR, không rerun
+commit cũ hoặc khẳng định deploy trước khi có main run mới đạt.
 
 Nguồn chính thức: [GitHub OIDC với AWS](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws),
 [S3 sync](https://docs.aws.amazon.com/cli/latest/reference/s3/sync.html),

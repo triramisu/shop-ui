@@ -177,7 +177,8 @@ test('IAM grants only the four approved actions on UI resources and trusts exact
   const trust = JSON.parse(readFileSync(new URL('../deploy/aws/github-trust.json', import.meta.url), 'utf8')).Statement[0];
   assert.equal(trust.Action, 'sts:AssumeRoleWithWebIdentity');
   assert.equal(trust.Principal.Federated, `arn:aws:iam::${targets.accountId}:oidc-provider/token.actions.githubusercontent.com`);
-  assert.deepEqual(trust.Condition.StringEquals, { 'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com', 'token.actions.githubusercontent.com:sub': `repo:${targets.repository}:ref:refs/heads/main` });
+  assert.deepEqual(trust.Condition.StringEquals, { 'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com', 'token.actions.githubusercontent.com:sub': 'repo:triramisu@200755440/shop-ui@1421523514:ref:refs/heads/main' });
+  assert.notEqual(trust.Condition.StringEquals['token.actions.githubusercontent.com:sub'], `repo:${targets.repository}:ref:refs/heads/main`, 'this repository uses immutable owner/repository IDs; legacy name-only subject is rejected by STS');
 });
 
 test('CLI refuses untrusted context before network access and never echoes env/role values', () => {
