@@ -7,6 +7,13 @@ export const capabilities = [
   'CATALOG_IMAGE_MANAGE',
   'INVENTORY_READ',
   'INVENTORY_WRITE',
+  'SYSTEM_USER_READ',
+  'SYSTEM_USER_STATUS_UPDATE',
+  'SYSTEM_USER_ROLE_ASSIGN',
+  'SYSTEM_ROLE_READ',
+  'SYSTEM_ROLE_MANAGE',
+  'SYSTEM_PERMISSION_READ',
+  'PAYMENT_REFUND',
 ] as const;
 export type Capability = (typeof capabilities)[number];
 
@@ -20,7 +27,7 @@ export function adminPermissions(
     !user ||
     user.status !== 'ACTIVE' ||
     !Array.isArray(user.roles) ||
-    !user.roles.some((r) => r === 'ADMIN' || r === 'STAFF') ||
+    !user.roles.some((r) => r !== 'USER' && /^[A-Z][A-Z0-9_]{2,49}$/.test(r)) ||
     !token ||
     token.length > 32000
   )
@@ -46,7 +53,10 @@ export function adminPermissions(
     const scopes = new Set<string>(claims.scope.split(/\s+/));
     if (
       !user.roles.some(
-        (r) => (r === 'ADMIN' || r === 'STAFF') && scopes.has(`ROLE_${r}`),
+        (r) =>
+          r !== 'USER' &&
+          /^[A-Z][A-Z0-9_]{2,49}$/.test(r) &&
+          scopes.has(`ROLE_${r}`),
       )
     )
       return new Set();
@@ -56,7 +66,14 @@ export function adminPermissions(
   }
 }
 export function canEnterAdmin(permissions: ReadonlySet<Capability>) {
-  return permissions.has('CATALOG_READ') || permissions.has('INVENTORY_READ');
+  return [
+    'CATALOG_READ',
+    'INVENTORY_READ',
+    'SYSTEM_USER_READ',
+    'SYSTEM_ROLE_READ',
+    'SYSTEM_PERMISSION_READ',
+    'PAYMENT_REFUND',
+  ].some((p) => permissions.has(p as Capability));
 }
 export function adminQueryKey(
   userId: string,

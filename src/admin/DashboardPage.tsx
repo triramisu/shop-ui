@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Icon } from '@/components/Icon';
 import { adminApi } from './api';
+import { systemApi } from './systemApi';
+import { roleNames, statusNames } from './systemRules';
 import { useAdminAccess } from './useAdminAccess';
 import {
   AdminHeader,
@@ -14,6 +16,12 @@ import {
 
 export default function DashboardPage() {
   const { permissions } = useAdminAccess();
+  const users = useQuery({
+    queryKey: useAdminKey('dashboard-users'),
+    queryFn: ({ signal }) => systemApi.users({ size: 5 }, signal),
+    enabled: permissions.has('SYSTEM_USER_READ'),
+    retry: false,
+  });
   const products = useQuery({
     queryKey: useAdminKey('dashboard-products'),
     queryFn: ({ signal }) =>
@@ -37,6 +45,18 @@ export default function DashboardPage() {
     retry: false,
   });
   const metrics = [
+    ...(permissions.has('SYSTEM_USER_READ')
+      ? [
+          {
+            label: 'Người dùng',
+            value: users.data?.totalElements,
+            loading: users.isPending,
+            to: '/admin/users',
+            caption: 'Khách hàng & nhân viên',
+            icon: 'user' as const,
+          },
+        ]
+      : []),
     ...(permissions.has('CATALOG_READ')
       ? [
           {
@@ -75,7 +95,7 @@ export default function DashboardPage() {
       <AdminHeader
         eyebrow="01 / TỔNG QUAN"
         title="Một nhịp vận hành rõ ràng."
-        description="Chăm chút sản phẩm. Theo dõi kho. Mọi dữ liệu được đọc trực tiếp từ cửa hàng."
+        description="Con người, sản phẩm và hoạt động cửa hàng. Mọi dữ liệu được đọc trực tiếp từ hệ thống."
       />
       <div className="admin-metrics">
         {metrics.map((metric) => (
@@ -95,6 +115,60 @@ export default function DashboardPage() {
           </Link>
         ))}
       </div>
+      {permissions.has('SYSTEM_USER_READ') && (
+        <section className="admin-panel admin-dashboard-people">
+          <div className="admin-section-heading">
+            <div>
+              <span className="admin-eyebrow">CON NGƯỜI</span>
+              <h2>Tài khoản mới nhất</h2>
+            </div>
+            <Link className="admin-text-link" to="/admin/users">
+              Quản lý người dùng & STAFF <Icon name="arrow" size={16} />
+            </Link>
+          </div>
+          {users.isPending ? (
+            <AdminLoading />
+          ) : users.isError ? (
+            <AdminError retry={() => void users.refetch()} />
+          ) : users.data.content.length ? (
+            <div className="admin-people-list">
+              {users.data.content.map((u) => (
+                <Link
+                  className="admin-person-row"
+                  key={u.id}
+                  to={`/admin/users/${u.id}`}
+                >
+                  <span className="admin-avatar">
+                    {(u.firstName || u.username).charAt(0).toUpperCase()}
+                  </span>
+                  <span className="admin-person-details">
+                    <b>
+                      {[u.lastName, u.firstName].filter(Boolean).join(' ') ||
+                        u.username}
+                    </b>
+                    <small>{u.email}</small>
+                  </span>
+                  <span className="admin-role-tags">
+                    {u.roles.map((r) => (
+                      <span className="admin-chip" key={r}>
+                        {roleNames[r] ?? r}
+                      </span>
+                    ))}
+                  </span>
+                  <span
+                    className={`admin-badge state-${u.status.toLowerCase()}`}
+                  >
+                    {statusNames[u.status] ?? u.status}
+                  </span>
+                  <Icon name="chevron" size={16} />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <Empty title="Chưa có tài khoản" />
+          )}
+        </section>
+      )}
       <div className="admin-dashboard-grid">
         {permissions.has('CATALOG_READ') && (
           <section className="admin-panel">
@@ -167,9 +241,17 @@ export default function DashboardPage() {
           </ol>
           <Link
             to={
-              permissions.has('CATALOG_READ')
-                ? '/admin/products'
-                : '/admin/inventory'
+              permissions.has('SYSTEM_USER_READ')
+                ? '/admin/users'
+                : permissions.has('CATALOG_READ')
+                  ? '/admin/products'
+                  : permissions.has('INVENTORY_READ')
+                    ? '/admin/inventory'
+                    : permissions.has('SYSTEM_ROLE_READ')
+                      ? '/admin/roles'
+                      : permissions.has('SYSTEM_PERMISSION_READ')
+                        ? '/admin/permissions'
+                        : '/admin/refunds'
             }
             className="admin-button"
           >

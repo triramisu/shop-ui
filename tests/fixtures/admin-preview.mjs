@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { systemPreview } from './system-preview.mjs';
 import {
   storefrontPreviewServer,
   previewProducts,
@@ -91,15 +92,19 @@ export function adminPreviewServer() {
   );
   const sessions = new Map();
   const counts = { admin: 0, mutations: 0 };
+  const system = systemPreview(all, sessions, counts);
   function session(role, permissions, username) {
+    const assigned = system.profile(username)?.roles ?? [role];
     const payload = {
       sub: username,
       token_type: 'access',
       exp: Math.floor(Date.now() / 1000) + 3600,
-      scope: [`ROLE_${role}`, ...permissions].join(' '),
+      scope: [...assigned.map((code) => `ROLE_${code}`), ...permissions].join(
+        ' ',
+      ),
     };
     const accessToken = `${Buffer.from('{"alg":"HS512","typ":"JWT"}').toString('base64url')}.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.LOCAL_FIXTURE_SIGNATURE`;
-    const user = {
+    const user = system.profile(username) ?? {
       id: `qa-${username}`,
       username,
       email: `${username}@example.invalid`,
@@ -109,10 +114,11 @@ export function adminPreviewServer() {
       roles: [role],
       createdAt: now(),
     };
-    sessions.set(accessToken, { user, permissions });
+    const refreshToken = randomUUID();
+    sessions.set(accessToken, { user, permissions, refreshToken });
     return {
       accessToken,
-      refreshToken: 'LOCAL-ONLY-NO-REFRESH',
+      refreshToken,
       tokenType: 'Bearer',
       authenticated: true,
       accessTokenExpiresAt: new Date(Date.now() + 3600000).toISOString(),
@@ -154,13 +160,17 @@ export function adminPreviewServer() {
     if (url.pathname === '/__qa/status') return send(200, counts);
     if (url.pathname === '/api/auth/token' && req.method === 'POST') {
       const permissions =
-        body.username === 'qa-admin' || body.username === 'qa-staff'
-          ? all
-          : body.username === 'qa-reader'
-            ? ['CATALOG_READ', 'INVENTORY_READ']
-            : body.username === 'qa-inventory'
-              ? ['INVENTORY_READ']
-              : [];
+        body.username === 'qa-admin' ||
+        body.username === 'qa-staff' ||
+        body.username === 'qa-user'
+          ? system.permissionsFor(body.username)
+          : body.username === 'qa-system-reader'
+            ? ['SYSTEM_USER_READ', 'SYSTEM_ROLE_READ', 'SYSTEM_PERMISSION_READ']
+            : body.username === 'qa-reader'
+              ? ['CATALOG_READ', 'INVENTORY_READ']
+              : body.username === 'qa-inventory'
+                ? ['INVENTORY_READ']
+                : [];
       if (
         ![
           'qa-admin',
@@ -168,8 +178,11 @@ export function adminPreviewServer() {
           'qa-reader',
           'qa-inventory',
           'qa-user',
+          'qa-system-reader',
         ].includes(body.username) ||
-        body.password !== 'PreviewOnly123!'
+        body.password !==
+          (system.passwords.get(body.username) ?? 'PreviewOnly123!') ||
+        system.profile(body.username)?.status !== 'ACTIVE'
       )
         return send(401, undefined, 1006);
       return send(
@@ -187,6 +200,7 @@ export function adminPreviewServer() {
     }
     const token = req.headers.authorization?.replace(/^Bearer /, '');
     const actor = sessions.get(token);
+    if (system.handle(req, url, body, actor, send)) return;
     if (url.pathname === '/api/cart' && req.method === 'GET')
       return actor
         ? send(200, {
@@ -201,7 +215,8 @@ export function adminPreviewServer() {
     if (url.pathname === '/api/auth/my-info')
       return actor ? send(200, actor.user) : send(401, undefined, 1006);
     if (url.pathname === '/api/auth/logout') {
-      sessions.delete(token);
+      for (const [key, a] of sessions)
+        if (a.refreshToken === body.token) sessions.delete(key);
       return send(200);
     }
     if (!url.pathname.startsWith('/api/admin/'))

@@ -8,12 +8,19 @@ import ProductEditorPage from './ProductEditorPage';
 import CategoriesPage from './CategoriesPage';
 import InventoryPage from './InventoryPage';
 import StockPage from './StockPage';
+import UsersPage from './UsersPage';
+import UserDetailPage from './UserDetailPage';
+import RolesPage from './RolesPage';
+import PermissionsPage from './PermissionsPage';
+import RefundsPage from './RefundsPage';
+import { useTheme } from '@/lib/useTheme';
 import '../styles/admin.css';
 
 function AdminLayout() {
   const { user, permissions, logout } = useAdminAccess();
+  const { theme, setTheme } = useTheme();
   return (
-    <div className="admin-shell">
+    <div className="admin-shell brand-surface">
       <a className="admin-skip" href="#admin-main">
         Đến nội dung quản trị
       </a>
@@ -28,6 +35,24 @@ function AdminLayout() {
             <Icon name="grid" />
             Tổng quan
           </NavLink>
+          {permissions.has('SYSTEM_USER_READ') && (
+            <NavLink to="/admin/users">
+              <Icon name="user" />
+              Người dùng
+            </NavLink>
+          )}
+          {permissions.has('SYSTEM_ROLE_READ') && (
+            <NavLink to="/admin/roles">
+              <Icon name="shield" />
+              Vai trò
+            </NavLink>
+          )}
+          {permissions.has('SYSTEM_PERMISSION_READ') && (
+            <NavLink to="/admin/permissions">
+              <Icon name="sliders" />
+              Quyền hệ thống
+            </NavLink>
+          )}
           {permissions.has('CATALOG_READ') && (
             <>
               <NavLink to="/admin/products">
@@ -44,6 +69,12 @@ function AdminLayout() {
             <NavLink to="/admin/inventory">
               <Icon name="box" />
               Tồn kho
+            </NavLink>
+          )}
+          {permissions.has('PAYMENT_REFUND') && (
+            <NavLink to="/admin/refunds">
+              <Icon name="refresh" />
+              Hoàn tiền
             </NavLink>
           )}
         </nav>
@@ -64,6 +95,20 @@ function AdminLayout() {
             AYDIBRO <span>/</span> QUẢN TRỊ
           </span>
           <div>
+            <button
+              className="admin-icon-button"
+              aria-label="Đổi giao diện sáng tối"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            >
+              <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
+            </button>
+            <Link
+              className="admin-icon-button"
+              to="/profile"
+              aria-label="Hồ sơ cá nhân"
+            >
+              <Icon name="user" />
+            </Link>
             <span className="admin-person">
               <b>{user!.firstName || user!.username}</b>
               <small>
@@ -104,6 +149,46 @@ export default function AdminWorkspace() {
     <Routes>
       <Route element={<AdminLayout />}>
         <Route index element={<DashboardPage />} />
+        <Route
+          path="users"
+          element={
+            <AdminGate capability="SYSTEM_USER_READ">
+              <UsersPage />
+            </AdminGate>
+          }
+        />
+        <Route
+          path="users/:userId"
+          element={
+            <AdminGate capability="SYSTEM_USER_READ">
+              <UserDetailPage />
+            </AdminGate>
+          }
+        />
+        <Route
+          path="roles"
+          element={
+            <AdminGate capability="SYSTEM_ROLE_READ">
+              <RolesPage />
+            </AdminGate>
+          }
+        />
+        <Route
+          path="permissions"
+          element={
+            <AdminGate capability="SYSTEM_PERMISSION_READ">
+              <PermissionsPage />
+            </AdminGate>
+          }
+        />
+        <Route
+          path="refunds"
+          element={
+            <AdminGate capability="PAYMENT_REFUND">
+              <RefundsPage />
+            </AdminGate>
+          }
+        />
         <Route
           path="products"
           element={

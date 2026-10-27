@@ -1,6 +1,7 @@
 /* UI-EDITORIAL-02 — idk/A-dam rules, Belledonne-inspired photo-led retail.
    Canonical visual tokens and behavior: design-system/shop-ui/pages/editorial-storefront.md. */
-.site-shell--retail {
+.site-shell--retail,
+.brand-surface {
   --retail-navy: #000e1f;
   --retail-cobalt: #0000c5;
   --retail-white: #ffffff;
@@ -47,7 +48,8 @@
   background: var(--color-bg);
   color: var(--color-text);
 }
-:root[data-theme='dark'] .site-shell--retail {
+:root[data-theme='dark'] .site-shell--retail,
+:root[data-theme='dark'] .brand-surface {
   --color-bg: #111a25;
   --color-surface: #182331;
   --color-surface-2: #1f2b39;
@@ -1708,5 +1710,50 @@
 @media (max-width: 900px) {
   .site-shell--retail .admin-entry-link {
     display: none;
+  }
+}
+
+/* Shared account settings, loaded on first customer visit. */
+.profile-settings {
+  margin-top: 36px;
+  display: grid;
+  gap: 36px;
+}
+.profile-settings section {
+  border-top: 1px solid var(--color-border);
+  padding-top: 28px;
+}
+.profile-settings h2 {
+  margin-bottom: 18px;
+}
+.profile-settings .form-stack {
+  display: grid;
+  gap: 18px;
+}
+.profile-settings .field {
+  display: grid;
+  gap: 8px;
+}
+.profile-settings .field input {
+  min-width: 0;
+  width: 100%;
+}
+.profile-settings p {
+  line-height: 1.7;
+  color: var(--color-text-muted);
+  margin-bottom: 20px;
+}
+.profile-form-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.profile-settings .profile-success {
+  color: var(--color-success);
+}
+
+@media (max-width: 600px) {
+  .profile-form-pair {
+    grid-template-columns: 1fr;
   }
 }

@@ -6,4 +6,9 @@ export function clearCustomerQueries(client: QueryClient): void {
     void client.cancelQueries({ queryKey: [key] });
     client.removeQueries({ queryKey: [key] });
   }
+  const mutations = client.getMutationCache();
+  for (const mutation of mutations.getAll()) {
+    if (mutation.options.mutationKey?.[0] === 'admin')
+      mutations.remove(mutation);
+  }
 }

@@ -4,6 +4,7 @@ import { Breadcrumbs, ErrorBox, Spinner } from '@/components/Layout';
 import { Icon } from '@/components/Icon';
 import { formatDateTime } from '@/lib/format';
 import { useAdminAccess } from '@/admin/useAdminAccess';
+import { ProfileSettings } from '@/components/ProfileSettings';
 
 export function ProfilePage() {
   const { user, loadingUser, logout, refreshUser } = useAuth();
@@ -96,6 +97,7 @@ export function ProfilePage() {
               </div>
             ))}
           </dl>
+          <ProfileSettings key={user.id} user={user} />
         </section>
       </div>
     </div>

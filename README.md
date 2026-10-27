@@ -1,5 +1,28 @@
 # Aydibro storefront
 
+## WEB-ADMIN-02 — quản trị hệ thống và API còn thiếu
+
+ADMIN/STAFF hoặc vai trò tùy chỉnh có capability quản trị được chuyển tới
+`/admin` sau đăng nhập thông thường. Dashboard ưu tiên tài khoản mới nhất;
+đường dẫn quản trị đã yêu cầu được giữ. Khách hàng về trang mua hàng đã yêu cầu.
+
+- `/admin/users`: tìm/phân trang khách hàng và nhân viên; xem chi tiết,
+  khóa/mở/vô hiệu hóa và thay thế vai trò có xác nhận, thu hồi phiên.
+- `/admin/roles`, `/admin/permissions`: xem vai trò/quyền, tạo/sửa/xóa vai trò
+  tùy chỉnh. ADMIN và role hệ thống được bảo vệ; STAFF không được nâng quyền.
+- `/profile`: cập nhật email/họ tên/ngày sinh, đổi mật khẩu và đăng xuất phiên.
+- `/admin/refunds`: tra cứu theo ID, yêu cầu hoàn với idempotency key cố định;
+  giữ key/payload khi chưa rõ kết quả. Không bật refund hoặc đổi provider AWS.
+- Admin dùng chung màu/font/theme sáng tối và nút của storefront. Dữ liệu
+  private được tách actor, xóa cả query/mutation cache khi đổi phiên.
+
+Hướng dẫn từng thao tác, bảng đối chiếu **14 API mới có màn hình**, các API
+chưa có backend và bằng chứng kiểm thử tại [runbook hệ thống](docs/system-workspace.md).
+Local đạt 116/116 Node tests, TypeScript/Vite và audit 0; các thao tác ghi thử
+chỉ trên fixture loopback. Không sửa backend/schema/dependency/env/IAM hoặc
+thực hiện giao dịch/quyền/password production trong đợt phát triển giao diện.
+Trạng thái PR/CI/deploy phải kiểm theo GitHub và `release.json` thực tế.
+
 ## WEB-ADMIN-01 — không gian quản trị sản phẩm và kho
 
 Mở `/admin` sau khi đăng nhập ADMIN hoặc STAFF có quyền tương ứng. Một layout

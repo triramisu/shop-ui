@@ -22,13 +22,13 @@ export function AdminGate({
     );
   if (auth.loadingUser)
     return (
-      <div className="container inner-page" role="status">
+      <div className="container inner-page brand-surface" role="status">
         Đang xác minh quyền quản trị…
       </div>
     );
   if (!auth.user)
     return (
-      <div className="container inner-page">
+      <div className="container inner-page brand-surface">
         <h1>Chưa xác minh được tài khoản</h1>
         <p>
           Thông tin quyền chưa tải được. Vui lòng thử lại trước khi mở dữ liệu
@@ -47,7 +47,7 @@ export function AdminGate({
     );
   if (!auth.canEnter || (capability && !auth.permissions.has(capability)))
     return (
-      <div className="container inner-page">
+      <div className="container inner-page brand-surface">
         <span className="eyebrow">403 / QUYỀN TRUY CẬP</span>
         <h1>Bạn chưa có quyền mở mục này.</h1>
         <p>
