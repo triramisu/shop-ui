@@ -18,7 +18,7 @@ ADMIN/STAFF hoặc vai trò tùy chỉnh có capability quản trị được ch
 
 Hướng dẫn từng thao tác, bảng đối chiếu **14 API mới có màn hình**, các API
 chưa có backend và bằng chứng kiểm thử tại [runbook hệ thống](docs/system-workspace.md).
-Local đạt 116/116 Node tests, TypeScript/Vite và audit 0; các thao tác ghi thử
+Local đạt 117/117 Node tests, TypeScript/Vite và audit 0; các thao tác ghi thử
 chỉ trên fixture loopback. Không sửa backend/schema/dependency/env/IAM hoặc
 thực hiện giao dịch/quyền/password production trong đợt phát triển giao diện.
 Đã merge [PR #12](https://github.com/triramisu/shop-ui/pull/12) sau

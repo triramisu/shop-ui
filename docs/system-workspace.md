@@ -119,7 +119,7 @@ trên AWS. Dừng server mất toàn bộ dữ liệu thử.
 
 ## Bằng chứng và giới hạn local
 
-- TypeScript + 116/116 Node tests + Vite đạt, audit 0; 9 test mới cho landing,
+- TypeScript + 117/117 Node tests + Vite đạt, audit 0; 10 test mới cho landing,
   custom capability, escalation, cache, API/version/idempotency, native decimal
   pattern, độ chính xác tiền và fixture RBAC/revocation.
 - Test HTTP fixture kiểm ADMIN protection, STAFF không nâng quyền, immutable
@@ -171,3 +171,11 @@ Endpoint của EC2. Không thay backend/migration/dependency/env/IAM/AWS.
 - Rollback UI bằng PR revert/artifact đã kiểm; giữ dữ liệu và quyền đã thay
   hợp lệ trên backend. Tắt/thu hồi quyền bằng API có thẩm quyền khi cần, không
   khôi phục JWT cũ hoặc reset RDS để rollback giao diện.
+
+### Giữ form khi gia hạn phiên
+
+Sau phát hành đầu, review phát hiện loading my-info trong lúc token tự refresh
+có thể unmount trang và mất draft/key trong RAM. AdminGate giữ trang khi đã
+có hồ sơ xác minh và scope hợp lệ; lần tải đầu hoặc lỗi/mismatch vẫn đóng.
+Không đổi token storage, refresh protocol hoặc authorization backend. Test
+render actual gate/hook kiểm profile đang refresh, profile thiếu và sai role.

@@ -75,6 +75,16 @@ test('actual AdminGate does not mount private page while profile loads or permis
     };
     assert.ok(render().includes('private-sentinel'));
     assert.equal(mounts, 1);
+    globalThis.__adminGateQa.loadingUser = true;
+    assert.ok(
+      render().includes('private-sentinel'),
+      'verified profile keeps the private page during background refresh',
+    );
+    globalThis.__adminGateQa.user = null;
+    assert.ok(
+      !render().includes('private-sentinel'),
+      'initial or failed profile cannot mount the private page',
+    );
   } finally {
     delete globalThis.__adminGateQa;
   }
@@ -263,25 +273,50 @@ test('write contracts distinguish productVersion, variant version and signed sto
   const calls = [];
   const previous = globalThis.fetch;
   globalThis.fetch = async (url, init) => {
-    calls.push({url, method: init.method, body: JSON.parse(init.body)});
-    return new Response(JSON.stringify({code: 1000, result: {}}), {status: 200});
+    calls.push({ url, method: init.method, body: JSON.parse(init.body) });
+    return new Response(JSON.stringify({ code: 1000, result: {} }), {
+      status: 200,
+    });
   };
   try {
-    const variant = {sku: 'QA-SKU-01', name: 'Silver', price: '123.45', currency: 'VND'};
-    await api.addVariant({id, version: 7}, variant);
+    const variant = {
+      sku: 'QA-SKU-01',
+      name: 'Silver',
+      price: '123.45',
+      currency: 'VND',
+    };
+    await api.addVariant({ id, version: 7 }, variant);
     assert.equal(calls[0].body.productVersion, 7);
     assert.equal(calls[0].body.version, undefined);
     assert.equal(calls[0].body.price, '123.45');
-    await api.updateVariant(id, id, {name: 'Cream', price: '125.50', currency: 'VND', version: 3});
+    await api.updateVariant(id, id, {
+      name: 'Cream',
+      price: '125.50',
+      currency: 'VND',
+      version: 3,
+    });
     assert.equal(calls[1].method, 'PUT');
     assert.equal(calls[1].body.version, 3);
     assert.equal(calls[1].body.productVersion, undefined);
     await api.arrange(id, [id], id);
-    assert.equal(calls[2].url, `/api/admin/catalog/products/${id}/images/arrangement`);
-    assert.deepEqual(calls[2].body, {imageIds: [id], primaryImageId: id});
-    await api.adjustStock(id, {quantityDelta: -5, reason: 'QA stock count', referenceId: 'QA-01', version: 9});
+    assert.equal(
+      calls[2].url,
+      `/api/admin/catalog/products/${id}/images/arrangement`,
+    );
+    assert.deepEqual(calls[2].body, { imageIds: [id], primaryImageId: id });
+    await api.adjustStock(id, {
+      quantityDelta: -5,
+      reason: 'QA stock count',
+      referenceId: 'QA-01',
+      version: 9,
+    });
     assert.equal(calls[3].method, 'POST');
-    assert.deepEqual(calls[3].body, {quantityDelta: -5, reason: 'QA stock count', referenceId: 'QA-01', version: 9});
+    assert.deepEqual(calls[3].body, {
+      quantityDelta: -5,
+      reason: 'QA stock count',
+      referenceId: 'QA-01',
+      version: 9,
+    });
   } finally {
     globalThis.fetch = previous;
   }

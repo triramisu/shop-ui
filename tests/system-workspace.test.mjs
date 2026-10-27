@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { compile, moduleUrl, loadClient } from './loadTypeScript.mjs';
 import { adminPreviewServer } from './fixtures/admin-preview.mjs';
 import { QueryClient } from '@tanstack/react-query';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 const accessUrl = moduleUrl(compile('../src/admin/access.ts'));
 const access = await import(accessUrl);
@@ -47,6 +49,36 @@ test('refund presentation avoids silently rounding unsafe numeric JSON amounts',
 });
 const token = (scopes) =>
   `eyJhbGciOiJIUzUxMiJ9.${Buffer.from(JSON.stringify({ sub: 'operator', token_type: 'access', exp: Math.floor(Date.now() / 1000) + 3600, scope: scopes })).toString('base64url')}.signature`;
+test('actual access hook retains verified permissions during profile refresh but closes missing or mismatched profiles', async () => {
+  const authStub = moduleUrl(
+    'export function useAuth(){return globalThis.__systemAuthQa;}',
+  );
+  const source = compile('../src/admin/useAdminAccess.ts').replace(
+    /from ['"]([^'"]+)['"]/g,
+    (_match, name) =>
+      `from ${JSON.stringify(name === '@/auth/AuthContext' ? authStub : name === './access' ? accessUrl : import.meta.resolve(name))}`,
+  );
+  const { useAdminAccess } = await import(moduleUrl(source));
+  function ReadAccess() {
+    const auth = useAdminAccess();
+    return createElement('p', null, auth.canEnter ? 'allowed' : 'denied');
+  }
+  try {
+    globalThis.__systemAuthQa = {
+      user: profile(['STAFF']),
+      session: { accessToken: token('ROLE_STAFF SYSTEM_USER_READ') },
+      loadingUser: true,
+    };
+    assert.match(renderToStaticMarkup(createElement(ReadAccess)), /allowed/);
+    globalThis.__systemAuthQa.user = null;
+    assert.match(renderToStaticMarkup(createElement(ReadAccess)), /denied/);
+    globalThis.__systemAuthQa.user = profile(['USER']);
+    assert.match(renderToStaticMarkup(createElement(ReadAccess)), /denied/);
+  } finally {
+    delete globalThis.__systemAuthQa;
+  }
+});
+
 test('logout clears private mutation records for every actor and retains unrelated cache', async () => {
   const { clearCustomerQueries } = await import(
     moduleUrl(compile('../src/lib/customerCache.ts'))

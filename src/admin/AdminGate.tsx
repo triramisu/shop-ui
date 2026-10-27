@@ -20,7 +20,7 @@ export function AdminGate({
         state={{ from: location.pathname + location.search }}
       />
     );
-  if (auth.loadingUser)
+  if (auth.loadingUser && !auth.user)
     return (
       <div className="container inner-page brand-surface" role="status">
         Đang xác minh quyền quản trị…
