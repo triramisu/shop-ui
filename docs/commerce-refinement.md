@@ -110,5 +110,26 @@ fixture vẫn giữ để test offline, không chứa trong dist hoặc làm fal
   local với API đã deploy. Chỉ cắt toolbar QA, không dựng ảnh giả thay ứng dụng.
 
 Phát hành sau selective review qua PR/checks/main CD theo [runbook](ui-cicd.md),
-không upload thủ công bundle đè pipeline. Đây là nghiệm thu UI local và lưu ảnh,
-không phải release mới hoặc nghiệm thu luồng thanh toán production.
+không upload thủ công bundle đè pipeline. Phần kiểm thử UI local và lưu ảnh
+không thay thế nghiệm thu luồng thanh toán production.
+
+## Nghiệm thu phát hành — 27/10/2026
+
+Chủ dự án yêu cầu tiếp tục bước push. Đã commit 33 file ứng dụng/tài liệu/ảnh,
+giữ nguyên skill local đang staged. Nhánh `codex/retail-storefront-refresh`
+được push tại `f238edd5db35e8351ec1116ff67dbdbb1fdd5baa` và mở
+[PR #8](https://github.com/triramisu/shop-ui/pull/8). Hai job `verify` và
+`dependency-review` trên [CI PR](https://github.com/triramisu/shop-ui/actions/runs/40441523657)
+đạt trước khi squash merge; không bypass hoặc thay branch protection.
+
+Merge commit `d3a98d8f2c30e01e36f285126dc15c7e49e25410` có
+[CI/CD main](https://github.com/triramisu/shop-ui/actions/runs/40441673093)
+verify/deploy thành công. Pipeline thực hiện OIDC, upload assets/index,
+invalidation/wait và website/API smoke. Đọc lại public `release.json` khớp
+commit này; index SHA256 khớp bản đã build local:
+`815c9d32484de752be496eda6dbfbbe82087de05f7100c1451b2e90d9f863a82`.
+Browser tại domain production đã hiển thị hero, danh mục và sản phẩm DEMO.
+
+Đây là bằng chứng lần phát hành giao diện, không khẳng định marker commit sẽ
+không thay sau các lần deploy tài liệu. Dùng `release.json` và workflow của
+HEAD mới nhất khi vận hành; không sửa marker thủ công để khớp biên bản cũ.
