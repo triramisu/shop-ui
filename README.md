@@ -1,5 +1,27 @@
 # Aydibro storefront
 
+## Đã phát hành giao diện mới — 27/10/2026
+
+- [PR #8](https://github.com/triramisu/shop-ui/pull/8) đã merge vào `main` sau
+  khi `verify` và `dependency-review` đều thành công ở
+  [CI PR](https://github.com/triramisu/shop-ui/actions/runs/40441523657).
+- Commit phát hành giao diện: `d3a98d8f2c30e01e36f285126dc15c7e49e25410`.
+  [CI/CD trên main](https://github.com/triramisu/shop-ui/actions/runs/40441673093)
+  có `verify` và `deploy` success: build, audit, upload S3, invalidation
+  CloudFront và HTTPS/API smoke đều đạt. `dependency-review` chỉ chạy trên PR,
+  nên skipped ở push main là đúng workflow.
+- Đã mở [aydibro.click](https://aydibro.click/) và thấy giao diện mới với dữ liệu
+  DEMO từ Catalog. Tại lần hậu kiểm, `release.json` khớp commit trên và index
+  SHA256 `815c9d32484de752be496eda6dbfbbe82087de05f7100c1451b2e90d9f863a82`.
+  Các commit tài liệu sau có thể đổi marker commit; kiểm marker mới nhất thay
+  vì coi SHA ở biên bản này luôn là HEAD hiện tại.
+- Luồng phát hành: code → push feature → PR → hai gate xanh → merge main →
+  build artifact → OIDC → assets S3 trước/index sau → invalidation → smoke.
+  Không upload bundle bằng tay, không thay backend/DB/payment hoặc IAM.
+- Hướng dẫn build/deploy/rollback ở [runbook CI/CD](docs/ui-cicd.md), thiết kế
+  và kiểm thử ở [biên bản UI](docs/commerce-refinement.md). Skill local trong
+  `.agents/` được bảo toàn và không đưa vào bản phát hành.
+
 ## UI-COMMERCE-03 — trau chuốt luồng cửa hàng, 27/10/2026
 
 Tiếp tục theo skill `idk`, `ui-ux-pro-max` và các nguyên tắc của `ui-styling`:
