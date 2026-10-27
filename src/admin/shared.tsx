@@ -216,6 +216,7 @@ export function ConfirmAction({
   onConfirm,
   disabled = false,
   quiet = true,
+  validate,
 }: {
   label: string;
   title: string;
@@ -223,6 +224,7 @@ export function ConfirmAction({
   onConfirm: () => void;
   disabled?: boolean;
   quiet?: boolean;
+  validate?: () => boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   return (
@@ -231,7 +233,9 @@ export function ConfirmAction({
         type="button"
         className={`admin-button ${quiet ? 'is-quiet' : ''}`}
         disabled={disabled}
-        onClick={() => dialog.current?.showModal()}
+        onClick={() => {
+          if (!validate || validate()) dialog.current?.showModal();
+        }}
       >
         {label}
       </button>

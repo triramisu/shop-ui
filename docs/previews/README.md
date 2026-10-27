@@ -1,5 +1,12 @@
 # Ảnh review UI-EDITORIAL-02
 
+## WEB-ADMIN-02 — 27/10/2026
+
+`system-users-desktop.jpg` chụp app quản trị với fixture local trong khung
+1440×1100 (có toolbar QA ở ảnh desktop). `system-users-mobile.jpg` chụp đúng
+vùng iframe 375×900. Dữ liệu là tài khoản giả trong bộ nhớ, không phải RDS
+production. Không sửa nội dung ảnh để giả kết quả thao tác.
+
 Screenshot lấy trực tiếp từ bản local trong browser ngày 27/10/2026. Bản cập
 nhật UI-COMMERCE-03 dùng dev proxy tới Catalog đã deploy sau khi ASG được bật
 lại; thay các screenshot fixture ở lượt UI-EDITORIAL-02 trước đó.

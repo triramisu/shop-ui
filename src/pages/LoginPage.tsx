@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthContext';
 import { authApi } from '@/api/auth';
@@ -6,9 +6,10 @@ import { ApiError } from '@/lib/apiClient';
 import { ErrorCode, type CaptchaResponse } from '@/lib/types';
 import { AuthShell } from '@/components/AuthShell';
 import { Icon } from '@/components/Icon';
+import { loginDestination } from '@/admin/systemRules';
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { login, user, session, loadingUser, refreshUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation() as { state?: { from?: string } };
   const intended = location.state?.from ?? '/';
@@ -22,6 +23,13 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [captchaBusy, setCaptchaBusy] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  useEffect(() => {
+    if (submitted && !loadingUser && user)
+      navigate(loginDestination(user, session?.accessToken, from), {
+        replace: true,
+      });
+  }, [submitted, loadingUser, user, session?.accessToken, from, navigate]);
 
   async function loadCaptcha() {
     setCaptchaBusy(true);
@@ -46,7 +54,7 @@ export function LoginPage() {
         captchaId: captcha?.captchaId,
         captchaAnswer: captcha ? captchaAnswer : undefined,
       });
-      navigate(from, { replace: true });
+      setSubmitted(true);
     } catch (err) {
       if (
         err instanceof ApiError &&
@@ -81,6 +89,14 @@ export function LoginPage() {
       </h1>
       <p>Đăng nhập để tiếp tục những lựa chọn của riêng bạn.</p>
       <form onSubmit={submit}>
+        {submitted && !loadingUser && !user && (
+          <div className="form-error" role="alert">
+            Đã đăng nhập nhưng chưa xác minh được hồ sơ.
+            <button type="button" onClick={() => void refreshUser()}>
+              Thử tải lại hồ sơ
+            </button>
+          </div>
+        )}
         {error && (
           <div className="alert alert-danger" role="alert">
             {error}

@@ -22,6 +22,15 @@ export function integerInput(value: string, signed = false): number {
   if (signed && result === 0) throw new Error('Mức điều chỉnh phải khác 0.');
   return result;
 }
+export function formatRefundAmount(amount: string | number, currency: string) {
+  if (
+    typeof amount === 'number' &&
+    (!Number.isFinite(amount) ||
+      Math.abs(amount) > Number.MAX_SAFE_INTEGER / 100)
+  )
+    return 'Cần đối chiếu số tiền với backend (vượt độ chính xác của trình duyệt).';
+  return formatAdminPrice(amount, currency);
+}
 export function validateImages(files: File[]): string | null {
   if (!files.length || files.length > 5) return 'Chọn từ 1 đến 5 ảnh mỗi lượt.';
   if (
