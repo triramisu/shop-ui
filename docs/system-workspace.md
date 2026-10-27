@@ -149,3 +149,25 @@ storefront qua .brand-surface, không cài Ant Design hoặc chép module đơn 
 SSO/reset password. Lịch sử truy cập và tổng đơn hàng quản trị cần backend
 endpoint trước. S3 ảnh sản phẩm giữ luồng UI → backend → S3 qua Gateway
 Endpoint của EC2. Không thay backend/migration/dependency/env/IAM/AWS.
+
+## Phát hành — 27/10/2026
+
+- Source `2b8f7adae0dd6a794a17a38a2a8ee955e023a549` được push và tạo
+  [PR #12](https://github.com/triramisu/shop-ui/pull/12). [CI PR 40520885596](https://github.com/triramisu/shop-ui/actions/runs/40520885596)
+  có verify/dependency-review success trước merge, không bypass bảo vệ main.
+- Squash merge thành `1237e01e9cd2f6592d810e02c05499d66c9c6aab`.
+  [Run main 40521075420](https://github.com/triramisu/shop-ui/actions/runs/40521075420)
+  verify/deploy success, gồm artifact/OIDC/S3/invalidation/HTTPS/API smoke.
+- Marker và index HTTPS đều 200; commit khớp SHA trên, hash index thực tế
+  `30ecb2288b8d02815855f6bdfbc602521e11f60f63593a8e7c62e91c45642efc` khớp marker.
+  Mở `/admin/users` anonymous trong browser đã chuyển sang `/login` và hiện form.
+  Không nhập credential ADMIN, đổi quyền/password hoặc hoàn tiền production.
+- Cập nhật bằng chứng qua PR tài liệu riêng, vẫn qua đủ hai gate. Commit tài
+  liệu có thể thay marker SHA; mốc chức năng ở trên không phải HEAD cố định.
+  Để kiểm lại, theo [runbook CI/CD](ui-cicd.md) và marker mới nhất.
+- Luồng tái sử dụng: source/DTO backend → ma trận API/UI → branch từ main →
+  code/test/QA → push/PR → hai gate xanh → merge → main CI/CD → marker/index/
+  deep link → README. Không upload bundle bằng tay hoặc đưa fixture lên S3.
+- Rollback UI bằng PR revert/artifact đã kiểm; giữ dữ liệu và quyền đã thay
+  hợp lệ trên backend. Tắt/thu hồi quyền bằng API có thẩm quyền khi cần, không
+  khôi phục JWT cũ hoặc reset RDS để rollback giao diện.
