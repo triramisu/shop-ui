@@ -1,5 +1,14 @@
 # Shop UI — E-commerce design system
 
+Active direction (27/10/2026): read [editorial-storefront](pages/editorial-storefront.md).
+The user requested a full refresh using the installed `idk` style reference and
+Belledonne-inspired photo-led commerce. This supersedes the visual direction
+below; its dataset and earlier decisions remain historical provenance.
+
+Current visual direction (23/10/2026): read `pages/retail.md` for the user's
+Coolmate-inspired Aydibro refresh. It supersedes the older editorial-only
+appearance below while preserving catalog/state/accessibility contracts.
+
 Source: read local `.agents/skills/ui-ux-pro-max/data/` directly using PowerShell
 CSV parsing. No Python, Python installation, or CLI-generated result. Project:
 **Shop UI**, product category: **E-commerce** (not E-commerce Luxury).

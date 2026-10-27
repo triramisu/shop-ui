@@ -4,6 +4,7 @@ import { formatMoney } from '@/lib/format';
 import { useSaved } from '@/lib/saved';
 import { Icon } from './Icon';
 import { ProductImage } from './ProductImage';
+import { listingPrice } from '@/lib/catalogListing';
 
 export function ProductCard({
   product,
@@ -12,13 +13,7 @@ export function ProductCard({
 }) {
   const { saved, toggle } = useSaved();
   const isSaved = saved.includes(product.id);
-  const low = product.variants?.reduce<
-    (typeof product.variants)[number] | null
-  >(
-    (min, value) =>
-      !min || Number(value.price) < Number(min.price) ? value : min,
-    null,
-  );
+  const price = listingPrice(product.variants ?? []);
   return (
     <article className="product-card">
       <div className="product-card-visual">
@@ -38,7 +33,8 @@ export function ProductCard({
           />
         </button>
         <Link className="product-card-view" to={`/products/${product.id}`}>
-          Khám phá sản phẩm <Icon name="arrow" size={17} />
+          {product.variants?.length ? 'Chọn phiên bản' : 'Xem sản phẩm'}{' '}
+          <Icon name="arrow" size={17} />
         </Link>
       </div>
       <div className="product-card-details">
@@ -49,13 +45,15 @@ export function ProductCard({
           <Link to={`/products/${product.id}`}>{product.name}</Link>
         </h3>
         <div className="product-card-bottom">
-          {low ? (
+          {price ? (
             <span className="price">
-              {product.variants.length > 1 && <small>Từ </small>}
-              {formatMoney(low.price, low.currency)}
+              {price.from && <small>Từ </small>}
+              {formatMoney(price.amount, price.currency)}
             </span>
           ) : (
-            <span className="muted">Chưa mở bán</span>
+            <span className="muted">
+              {product.variants?.length ? 'Xem giá từng phiên bản' : 'Chưa mở bán'}
+            </span>
           )}
           <Link
             className="product-arrow"
@@ -65,6 +63,9 @@ export function ProductCard({
             <Icon name="arrow-up" size={19} />
           </Link>
         </div>
+        <p className="retail-variants">
+          {product.variants?.length ?? 0} phiên bản · Chọn theo gu của bạn
+        </p>
       </div>
     </article>
   );

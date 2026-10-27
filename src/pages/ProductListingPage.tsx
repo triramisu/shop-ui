@@ -6,6 +6,7 @@ import { Breadcrumbs, EmptyState, ErrorBox } from '@/components/Layout';
 import { Icon } from '@/components/Icon';
 import { ListingFilters } from '@/components/catalog/ListingFilters';
 import { ListingProductCard } from '@/components/catalog/ListingProductCard';
+import { categoryLabel } from '@/components/catalog/presentation';
 import {
   LISTING_MAX_PAGE,
   LISTING_PAGE_SIZE,
@@ -82,7 +83,7 @@ export default function ProductListingPage() {
   }, [keyword]);
   useEffect(() => {
     const previousTitle = document.title;
-    document.title = 'Sản phẩm | Aydibro — Shop UI';
+    document.title = 'Bộ sưu tập âm thanh | Aydibro';
     return () => {
       document.title = previousTitle;
     };
@@ -120,6 +121,10 @@ export default function ProductListingPage() {
   function resetFilters() {
     update({ keyword: '', categoryId: '' });
   }
+  function categoryHref(id: string) {
+    const query = patchListingParams(params, { categoryId: id }).toString();
+    return query ? `/products?${query}` : '/products';
+  }
   function goToPage(next: number) {
     if (next === page) return;
     paginationFocus.current = true;
@@ -153,19 +158,12 @@ export default function ProductListingPage() {
     <div className="plp-page">
       <section className="container plp-intro" aria-labelledby="plp-title">
         <Breadcrumbs items={[{ label: 'Cửa hàng' }]} />
-        <div className="plp-hero">
+        <div className="plp-hero retail-listing-banner">
           <div className="plp-hero-copy">
-            <p className="plp-kicker">
-              <span /> THE CONSIDERED EDIT
-            </p>
-            <h1 id="plp-title">
-              Cho mỗi ngày,
-              <br />
-              <em>đáng tận hưởng.</em>
-            </h1>
+            <p className="plp-kicker">THE AUDIO COLLECTION / AYDIBRO</p>
+            <h1 id="plp-title">Bộ sưu tập âm thanh.</h1>
             <p>
-              Những món đồ công nghệ cho công việc, khoảng nghỉ và những điều
-              bạn yêu thích. Chọn vừa đủ, dùng thật lâu.
+              Một chiếc tai nghe cho mỗi nhịp sống. Chọn âm thanh của riêng bạn.
             </p>
             <a className="plp-hero-link" href="#listing-results">
               Khám phá sản phẩm{' '}
@@ -177,7 +175,7 @@ export default function ProductListingPage() {
           <figure className="plp-editorial">
             <div className="plp-editorial-image">
               <img
-                src="/images/hero-audio.png"
+                src="/images/audio-still-life-v1.webp"
                 alt="Ảnh biên tập: tai nghe bạc trên khối đá đất nung"
                 width="1536"
                 height="1024"
@@ -193,6 +191,26 @@ export default function ProductListingPage() {
             </figcaption>
           </figure>
         </div>
+        <nav
+          className="retail-category-pills"
+          aria-label="Khám phá danh mục sản phẩm"
+        >
+          <Link
+            to={categoryHref('')}
+            aria-current={!categoryId ? 'page' : undefined}
+          >
+            Tất cả sản phẩm
+          </Link>
+          {allCategories.map((item) => (
+            <Link
+              key={item.id}
+              to={categoryHref(item.id)}
+              aria-current={categoryId === item.id ? 'page' : undefined}
+            >
+              {categoryLabel(item.name)}
+            </Link>
+          ))}
+        </nav>
       </section>
 
       <section

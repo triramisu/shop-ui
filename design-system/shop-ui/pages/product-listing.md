@@ -1,5 +1,9 @@
 # Product Listing Page — implementation contract
 
+Historical editorial contract. The active 23/10/2026 visual override is now
+`retail.md` (user requested Coolmate-inspired retail); keep the functional
+URL, price, modal and ownership contracts below.
+
 Read ../MASTER.md first. This page adapts the skill to a Vietnamese electronics
 storefront without claiming inventory, discounts, reviews or delivery policies
 that the backend does not provide.

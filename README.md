@@ -1,6 +1,110 @@
 # Aydibro storefront
 
-React 18 + TypeScript + Vite, sử dụng API thật của Shop. Thiết kế riêng theo hướng editorial: nền kem, chữ đậm, màu đất nung, ảnh có khoảng thở và bố cục gọn. Không dùng layout/template của hai dự án tham khảo.
+## UI-COMMERCE-03 — trau chuốt luồng cửa hàng, 27/10/2026
+
+Tiếp tục theo skill `idk`, `ui-ux-pro-max` và các nguyên tắc của `ui-styling`:
+gallery phóng to bằng dialog, giá hiển thị theo từng phiên bản, sản phẩm cùng
+danh mục, tab đăng nhập/đăng ký và tiến trình giỏ → xác nhận → thanh toán.
+Tăng độ rõ của chữ/thao tác mobile, giữ tone biên tập Aydibro và CSS hiện hữu;
+không cài Tailwind/shadcn hoặc đổi contract auth/payment để chỉ sửa phần nhìn.
+
+Preview cổng 5190 hiện dùng **Catalog đã deploy**, ảnh sản phẩm lấy qua API từ S3.
+Chủ dự án xác nhận đã bật lại ASG/bastion; tại lần đọc lại Catalog trả HTTP 200,
+API private trả 401 đúng. Thông báo 502/503 trong lượt trước là ghi nhận trước đó,
+không mô tả trạng thái hiện tại. Đã dừng điều tra hạ tầng theo yêu cầu.
+
+Toàn bộ **5 file ảnh giao diện** đã có trên S3 UI; tải qua CloudFront trả 200 và
+checksum khớp. Ảnh still-life mới 142.502 bytes thay PNG 2,19 MB trong UI mới;
+ảnh sản phẩm tiếp tục nằm ở bucket S3 sản phẩm, không nhúng ảnh fixture vào
+bundle. [Quyết định, kiểm thử và cách vận hành](docs/commerce-refinement.md).
+
+```powershell
+cd D:/shop-ui
+$env:VITE_DEV_API_TARGET='https://aydibro.click'
+npm run dev -- --host 127.0.0.1 --port 5190 --strictPort
+```
+
+Mở `http://127.0.0.1:5190/`. Đây là UI local gọi backend đã deploy; không phải
+bản UI mới trên domain production. Bản phát hành đi qua PR, hai gate CI và
+pipeline S3/CloudFront; kiểm tra `release.json` để xác nhận SHA thực tế trên web.
+Các hướng dẫn fixture dưới đây vẫn giữ để kiểm tra offline có chủ đích.
+
+## UI-EDITORIAL-02 — bản thiết kế mới ngày 27/10/2026
+
+Làm lại theo skill local `idk` (`.agents/skills/idk/SKILL.md`) và tham khảo phong cách
+[Belledonne](https://belledonne.com/en): nền trắng ngà/navy, logo giữa header,
+ảnh chủ đạo tràn khung, thẻ hàng phẳng và nhiều khoảng thở. Giữ thương hiệu
+âm thanh Aydibro; không sao chép tài sản, lời quảng cáo hoặc code của mẫu.
+
+Trang chủ, menu/tìm kiếm, PLP, chi tiết và form/tài khoản/giỏ/checkout dùng
+chung hệ thống mới. API/auth/token/payment không thay. URL bộ lọc cũ ở `/`
+được chuyển tới `/products`, giữ query; giá/phiên bản/ảnh sản phẩm vẫn từ API.
+
+- [Hợp đồng, kết quả QA và từng bước build/S3](docs/editorial-storefront.md).
+- [Design system hiện hành](design-system/shop-ui/pages/editorial-storefront.md).
+- [Ảnh desktop](docs/previews/editorial-desktop.png) · [Ảnh mobile](docs/previews/editorial-mobile.png).
+- `npm ci`, TypeScript, 94/94 test và production build đạt; audit không có lỗ hổng. Xem giới
+  hạn của fixture/browser QA và lỗi API production trong biên bản ở trên.
+- Ảnh banner mới `images/everyday-listening.webp` đã upload riêng vào S3 UI
+  private; CloudFront trả 200, checksum khớp, AES256. Đây chưa phải phát hành UI mới.
+- Nhánh phát triển: `codex/retail-storefront-refresh`, kế thừa draft cũ.
+  Phát hành qua PR sau verify/dependency-review; main merge kích hoạt CD thật.
+
+Xem bản có dữ liệu fixture local, không cần bật AWS/backend:
+
+```powershell
+cd D:/shop-ui
+npm ci
+# Terminal 1: chỉ GET, dữ liệu minh họa; không có login/payment hay ghi DB.
+node tests/fixtures/storefront-preview.mjs
+# Terminal 2:
+$env:VITE_DEV_API_TARGET='http://127.0.0.1:5191'
+npm run dev -- --host 127.0.0.1 --port 5190 --strictPort
+```
+
+Mở `http://127.0.0.1:5190/`. Fixture không nằm trong `dist/`, không phải dữ
+liệu dự phòng của production. Để dùng API thật, đổi dev target thành backend
+đang chạy. Không chạy `npm ci` khi Vite đang giữ esbuild.exe trên Windows;
+dừng dev server trước, cài/build, rồi chạy lại. Bản build production luôn
+dùng `/api` cùng domain và xuất `dist/` theo pipeline S3/CloudFront hiện hữu.
+
+## Lịch sử bản retail trước
+
+React 18 + TypeScript + Vite, sử dụng API thật của Shop. Bản retail mới giữ
+thương hiệu Aydibro: trắng/đen/đất nung, banner ảnh lớn, danh mục rõ và thẻ hàng
+ưu tiên giá/phiên bản. Lấy cảm hứng nhịp bán lẻ Coolmate, không sao chép template,
+ảnh hoặc thương hiệu. Các mục editorial phía dưới là lịch sử của bản trước.
+
+## UI-RETAIL-01 — bản local ngày 23/10/2026
+
+Nhánh `codex/retail-storefront-refresh`, từ main `1133143`. Đã làm mới trang
+chủ, PLP và shared header/footer; giữ Catalog/Identity/Cart/Order/payment API.
+Đã đọc skill UI cài trong `.agents/skills/`, dùng token ba lớp, màu thương hiệu,
+font tiếng Việt local và responsive/a11y của skill; không cài framework mới.
+
+Hợp đồng, lệnh kiểm tra, giới hạn và kết quả tại [biên bản retail](docs/retail-refresh.md).
+Thiết kế hiện hành tại [retail override](design-system/shop-ui/pages/retail.md).
+Tại lần nghiệm thu local 23/10, bản này chưa push/merge/deploy. Các mục
+UI-EDITORIAL-02 và UI-COMMERCE-03 ở trên là thiết kế và gate kế tiếp.
+
+Xem local với backend đang chạy hoặc đặt proxy chỉ đọc Catalog đã deploy:
+
+```powershell
+cd D:/shop-ui
+npm ci
+npm run build
+# Chỉ là cấu hình dev; không nhúng URL này vào bundle production.
+$env:VITE_DEV_API_TARGET='https://aydibro.click'
+npm run dev -- --host 127.0.0.1 --port 5180 --strictPort
+```
+
+Mở `http://127.0.0.1:5180/` hoặc `/products`. Khung kiểm tra CSS local nằm ở
+`/tests/fixtures/retail-review.html`; không được đưa file fixture lên S3.
+Build production vẫn `/api`, xuất `dist/`, không phải `build/`; không chỉnh env
+AWS/secret/DNS để xem bản UI. Hủy terminal dev bằng Ctrl+C khi không dùng.
+
+WAF Challenge chưa bật hoặc tích hợp SDK trong bản UI này. CAPTCHA thích ứng
+của backend vẫn là cơ chế hiện hữu, không bị thay bằng hình thức giả lập.
 
 ## CI/CD UI — UI-CD-01
 

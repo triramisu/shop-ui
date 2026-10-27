@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 
 export function AuthShell({
   children,
@@ -13,20 +14,30 @@ export function AuthShell({
         <div>
           <span className="eyebrow">THE AYDIBRO WAY</span>
           <h2>
-            Những điều tốt đẹp.
+            Một khoảng trời riêng.
             <br />
-            Bắt đầu từ bạn.
+            Bắt đầu từ đây.
           </h2>
         </div>
         <img
-          src="/images/hero-audio.png"
-          alt="Không gian công nghệ mang sắc đất nung ấm áp"
+          src="/images/everyday-listening.webp"
+          alt="Ảnh biên tập: một người nghe nhạc trong nắng chiều bên bờ biển"
         />
         <div className="auth-story-bottom">
           {register ? 'A NEW CHAPTER STARTS HERE.' : 'GOOD TO HAVE YOU BACK.'}
         </div>
       </aside>
-      <section className="auth-panel">{children}</section>
+      <section className="auth-panel">
+        <nav className="auth-tabs" aria-label="Truy cập tài khoản">
+          <Link to="/login" aria-current={!register ? 'page' : undefined}>
+            Đăng nhập
+          </Link>
+          <Link to="/register" aria-current={register ? 'page' : undefined}>
+            Tạo tài khoản
+          </Link>
+        </nav>
+        {children}
+      </section>
     </div>
   );
 }

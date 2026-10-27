@@ -2,9 +2,16 @@ import { useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { Icon } from './Icon';
+import { useTheme } from '@/lib/useTheme';
+import '@/styles/retail.css';
 
 export function Layout() {
   const { pathname, hash } = useLocation();
+  const { theme, setTheme } = useTheme();
+  const dark =
+    theme === 'dark' ||
+    (theme === 'system' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
   const previousPath = useRef<string>();
   useEffect(() => {
     const changedPage = previousPath.current !== pathname;
@@ -25,9 +32,7 @@ export function Layout() {
   }, [pathname, hash]);
 
   return (
-    <div
-      className={`site-shell${pathname.replace(/\/+$/, '') === '/products' ? ' site-shell--editorial' : ''}`}
-    >
+    <div className="site-shell site-shell--retail">
       <a className="skip-link" href="#main-content">
         Đến nội dung chính
       </a>
@@ -36,15 +41,24 @@ export function Layout() {
         <Outlet />
       </main>
       <footer className="site-footer">
+        <div className="container footer-invitation">
+          <div>
+            <p className="eyebrow">YOUR NEXT GOOD LISTEN</p>
+            <h2>Tìm một chút yên tĩnh.</h2>
+          </div>
+          <Link to="/products" className="retail-hero-cta">
+            Ghé cửa hàng <Icon name="arrow-up" size={18} />
+          </Link>
+        </div>
         <div className="container footer-top">
           <div className="footer-brand">
             <Link to="/" className="wordmark">
               aydibro<span>.</span>
             </Link>
             <p>
-              Công nghệ vừa vặn.
+              Âm thanh hay.
               <br />
-              Cuộc sống nhiều cảm hứng.
+              Cho những ngày rất riêng.
             </p>
           </div>
           <div>
@@ -57,17 +71,17 @@ export function Layout() {
             <h3>Tài khoản của bạn</h3>
             <Link to="/profile">Hồ sơ cá nhân</Link>
             <Link to="/cart">Giỏ hàng</Link>
-            <Link to="/login">Đăng nhập</Link>
+            <Link to="/orders">Đơn hàng của tôi</Link>
           </div>
           <div className="footer-note">
-            <span className="eyebrow">LESS, BUT BETTER.</span>
+            <span className="eyebrow">MAKE ROOM FOR MUSIC.</span>
             <p>
-              Một lựa chọn nhỏ hôm nay.
+              Dành một khoảng nhỏ cho bản thân.
               <br />
-              Một trải nghiệm tốt hơn mỗi ngày.
+              Bắt đầu bằng một bản nhạc yêu thích.
             </p>
             <Link to="/products" className="text-link">
-              Tìm điều bạn thích <Icon name="arrow" size={17} />
+              Tìm điều bạn thích <Icon name="arrow-up" size={17} />
             </Link>
           </div>
         </div>
@@ -75,9 +89,13 @@ export function Layout() {
           <span>
             © {new Date().getFullYear()} Aydibro. Made for your everyday.
           </span>
-          <span>
-            Chọn có chủ đích. Dùng thật lâu. <span className="footer-dot" />
-          </span>
+          <button
+            className="footer-theme"
+            onClick={() => setTheme(dark ? 'light' : 'dark')}
+          >
+            <Icon name={dark ? 'sun' : 'moon'} size={16} />
+            {dark ? 'Giao diện sáng' : 'Giao diện tối'}
+          </button>
         </div>
       </footer>
     </div>
