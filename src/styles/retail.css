@@ -1705,3 +1705,8 @@
     scroll-behavior: auto !important;
   }
 }
+@media (max-width: 900px) {
+  .site-shell--retail .admin-entry-link {
+    display: none;
+  }
+}

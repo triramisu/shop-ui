@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout, Spinner } from '@/components/Layout';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
+import { AdminGate } from '@/admin/AdminGate';
 import { CatalogPage } from '@/pages/CatalogPage';
 import { ProductPage } from '@/pages/ProductPage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -16,10 +17,23 @@ import { OrdersPage } from '@/pages/OrdersPage';
 import { OrderDetailPage } from '@/pages/OrderDetailPage';
 
 const ProductListingPage = lazy(() => import('@/pages/ProductListingPage'));
+const AdminWorkspace = lazy(() => import('@/admin/AdminWorkspace'));
 
 export default function App() {
   return (
     <Routes>
+      <Route
+        path="admin/*"
+        element={
+          <AdminGate>
+            <Suspense
+              fallback={<Spinner label="Đang mở không gian quản trị…" />}
+            >
+              <AdminWorkspace />
+            </Suspense>
+          </AdminGate>
+        }
+      />
       <Route element={<Layout />}>
         <Route index element={<CatalogPage />} />
         <Route

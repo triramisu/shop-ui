@@ -14,3 +14,10 @@ là bằng chứng local trước phát hành. API trả 200, API private trả 
 vẫn giữ riêng và không nằm trong `dist/`.
 
 Xem [hướng dẫn và gate mới nhất](../commerce-refinement.md).
+
+## WEB-ADMIN-01
+
+`admin-desktop.png` (1440×1100) và `admin-mobile.png` (375×900): app quản trị
+local với STAFF fixture đủ quyền, dữ liệu trong bộ nhớ server 5192. Không dùng
+phiên ADMIN production hoặc gọi mutation AWS/RDS/S3 để chụp. Chỉ cắt toolbar
+44px của khung responsive. [Hướng dẫn và giới hạn](../admin-workspace.md).

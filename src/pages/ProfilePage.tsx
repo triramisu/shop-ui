@@ -3,9 +3,11 @@ import { useAuth } from '@/auth/AuthContext';
 import { Breadcrumbs, ErrorBox, Spinner } from '@/components/Layout';
 import { Icon } from '@/components/Icon';
 import { formatDateTime } from '@/lib/format';
+import { useAdminAccess } from '@/admin/useAdminAccess';
 
 export function ProfilePage() {
   const { user, loadingUser, logout, refreshUser } = useAuth();
+  const { canEnter } = useAdminAccess();
   const navigate = useNavigate();
   if (loadingUser && !user)
     return <Spinner label="Đang mở tài khoản của bạn…" />;
@@ -51,6 +53,12 @@ export function ProfilePage() {
           <h2>{name}</h2>
           <p>{user.email}</p>
           <nav aria-label="Menu tài khoản">
+            {canEnter && (
+              <Link to="/admin">
+                <Icon name="shield" size={17} />
+                Quản trị cửa hàng
+              </Link>
+            )}
             <Link to="/profile">
               <Icon name="user" size={17} />
               Thông tin cá nhân
