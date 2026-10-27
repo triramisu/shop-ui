@@ -148,3 +148,37 @@ Build/audit/CI và trạng thái phát hành được nghiệm thu trong PR/work
   browser, dùng tài khoản STAFF fixture đủ quyền. Không dựng ảnh thay giao diện.
 - Gate local không thay trạng thái CI/main. PR phải đủ verify/dependency-review;
   sau merge đợi verify/deploy thành công và marker đúng SHA trước khi bàn giao.
+
+## Biên bản phát hành — 27/10/2026
+
+1. Commit ứng dụng `a2bf0b3282c84bf208a4ad7bb2b9acfb67e3e131` được push lên
+   `feature/admin-ui/catalog-inventory`, gồm 29 file; skill local có sẵn không
+   đưa vào commit. Không force-push hoặc đổi branch protection.
+2. [PR #10](https://github.com/triramisu/shop-ui/pull/10) vào main có
+   [run 40484290428](https://github.com/triramisu/shop-ui/actions/runs/40484290428):
+   `verify` và `dependency-review` success; deploy skipped đúng vì là PR.
+3. Squash merge tạo `e59321d47fcce99e436d29035011b876322a480b`.
+   [Run main 40484606150](https://github.com/triramisu/shop-ui/actions/runs/40484606150)
+   có verify/deploy success. Runner build artifact từ đúng main, OIDC chỉ role
+   UI hiện hữu, upload assets trước/index sau, invalidation và HTTPS/API smoke.
+   Không upload dist bằng tay, không dùng AWS credential trong trình duyệt.
+4. GET marker và index HTTPS trả 200, commit khớp SHA trên; hash index thực tế
+   khớp `f93677f18be238d4fefa0ef0d2a429dd570a001f6a6ffb6064b4aed2ac0f7fad`.
+   Đã mở `/admin` trong browser anonymous và thấy chuyển tới `/login`, có form
+   đăng nhập; không nhập credential ADMIN hoặc ghi dữ liệu production để QA.
+5. Tài liệu được cập nhật qua PR riêng, vẫn đủ hai gate. Commit tài liệu sau
+   có thể đổi marker commit; SHA trên là mốc phát hành chức năng, không phải
+   cam kết HEAD luôn giữ nguyên. Dùng runbook CI/CD để kiểm marker mới nhất.
+
+Nếu tái hiện phát hành: push branch → tạo PR → hai gate xanh → merge main →
+đợi verify/deploy xanh → đọc marker/index → mở deep link. Khi thiếu quyền write
+ở connector GitHub và tab GitHub timeout trong đợt này, đã dùng GitHub REST
+chính thức bằng phiên Git Credential Manager hiện hữu, credential chỉ trong
+RAM; không tạo token, mở rộng scope hoặc thay cấu hình mạng/bảo vệ repo.
+
+Để nghiệm thu vận hành bằng account thật: chủ dự án tự đăng nhập ADMIN/STAFF
+đã có quyền tại `/admin`, đọc danh sách trước rồi tạo một sản phẩm nháp có chủ
+đích. Ảnh upload đi theo backend tới bucket sản phẩm hiện hữu, EC2 dùng S3
+Gateway Endpoint; UI không trỏ trình duyệt vào endpoint private. Quy trình
+này không chứng nhận ghi S3/RDS production từ các lượt fixture local ở trên.
+Không đưa mật khẩu, JWT, URL ảnh ký tạm hoặc nội dung secret vào README.
