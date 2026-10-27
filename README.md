@@ -21,8 +21,17 @@ desktop, mục **Quản trị cửa hàng** trong menu mobile hoặc trong hồ 
   vẫn là nơi quyết định quyền của mọi API.
 
 Xem [hợp đồng, ma trận quyền, hướng dẫn kiểm thử và vận hành](docs/admin-workspace.md).
-Phát hành theo PR và pipeline hiện hữu; `release.json` là dấu phiên bản đang
-chạy. Task này không làm quản trị user/role, báo cáo doanh thu hay hoàn tiền.
+Đã merge [PR #10](https://github.com/triramisu/shop-ui/pull/10) và phát hành
+ngày 27/10/2026. [CI của PR](https://github.com/triramisu/shop-ui/actions/runs/40484290428)
+đạt `verify`/`dependency-review`; [CI/CD main](https://github.com/triramisu/shop-ui/actions/runs/40484606150)
+đạt `verify`/`deploy`, gồm upload S3, invalidation và HTTPS/API smoke.
+
+Mở [quản trị Aydibro](https://aydibro.click/admin) bằng tài khoản thật có quyền.
+Đã hậu kiểm marker/index đúng commit `e59321d47fcce99e436d29035011b876322a480b`
+và anonymous chuyển tới login. Các thao tác ghi/RBAC được kiểm trên fixture local;
+chưa thử ghi bằng ADMIN/STAFF thật trên production. `release.json` theo HEAD mới
+nhất có thể đổi sau commit tài liệu. Task này không làm quản trị user/role,
+báo cáo doanh thu hay hoàn tiền.
 
 ## Đã phát hành giao diện mới — 27/10/2026
 
