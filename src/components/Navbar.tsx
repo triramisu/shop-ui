@@ -8,9 +8,11 @@ import { useSaved } from '@/lib/saved';
 import { Icon } from './Icon';
 import { CatalogNavLink } from './CatalogNavLink';
 import { categoryLabel } from './catalog/presentation';
+import { useAdminAccess } from '@/admin/useAdminAccess';
 
 export function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
+  const { canEnter } = useAdminAccess();
   const navigate = useNavigate();
   const location = useLocation();
   const { saved } = useSaved();
@@ -107,6 +109,15 @@ export function Navbar() {
             aydibro<span>.</span>
           </Link>
           <div className="header-actions">
+            {canEnter && (
+              <Link
+                to="/admin"
+                className="icon-button admin-entry-link"
+                aria-label="Mở quản trị cửa hàng"
+              >
+                <Icon name="shield" />
+              </Link>
+            )}
             <button
               className="icon-button"
               type="button"
@@ -182,6 +193,7 @@ export function Navbar() {
             </CatalogNavLink>
           ))}
           <Link to="/saved">Đã lưu ({saved.length})</Link>
+          {canEnter && <Link to="/admin">Quản trị cửa hàng</Link>}
           <Link to={isAuthenticated ? '/orders' : '/login'}>
             {isAuthenticated ? 'Đơn hàng của tôi' : 'Đăng nhập'}
           </Link>

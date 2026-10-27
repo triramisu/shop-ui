@@ -1,5 +1,29 @@
 # Aydibro storefront
 
+## WEB-ADMIN-01 — không gian quản trị sản phẩm và kho
+
+Mở `/admin` sau khi đăng nhập ADMIN hoặc STAFF có quyền tương ứng. Một layout
+riêng dùng chung cho hai vai trò; menu và thao tác phụ thuộc capability thực
+tế, không cấp quyền chỉ từ tên role. Từ cửa hàng, dùng biểu tượng quản trị trên
+desktop, mục **Quản trị cửa hàng** trong menu mobile hoặc trong hồ sơ cá nhân.
+
+- Tổng quan đọc số sản phẩm, danh mục và bản ghi SKU×địa điểm từ API.
+- Danh mục: tạo, sửa, bật/tắt bằng version hiện hành.
+- Sản phẩm: tìm/lọc/phân trang, tạo nháp, sửa nội dung, thêm/sửa SKU và giá,
+  bật/tắt SKU; công bố/ẩn có bước xác nhận riêng.
+- Ảnh: upload JPEG/PNG qua backend tới S3, chọn đại diện, đổi thứ tự và xóa
+  có xác nhận. Không nhúng AWS key hoặc ghi URL ký tạm vào tài liệu.
+- Kho: lọc SKU/địa điểm, khởi tạo, xem số dư/lịch sử; điều chỉnh bằng số tăng/
+  giảm, lý do và version. Giao diện không sửa số đang giữ hoặc tự quyết định
+  khả dụng. Lỗi 409 yêu cầu tải bản mới; không tự gửi lại request ghi.
+- USER bị từ chối, chờ my-info trước khi mount page/query. Cache quản trị có
+  actor trong key, bị hủy/xóa khi đăng nhập lại hoặc logout. Spring Security
+  vẫn là nơi quyết định quyền của mọi API.
+
+Xem [hợp đồng, ma trận quyền, hướng dẫn kiểm thử và vận hành](docs/admin-workspace.md).
+Phát hành theo PR và pipeline hiện hữu; `release.json` là dấu phiên bản đang
+chạy. Task này không làm quản trị user/role, báo cáo doanh thu hay hoàn tiền.
+
 ## Đã phát hành giao diện mới — 27/10/2026
 
 - [PR #8](https://github.com/triramisu/shop-ui/pull/8) đã merge vào `main` sau
