@@ -11,6 +11,6 @@ export function useAdminAccess() {
   return {
     ...auth,
     permissions,
-    canEnter: !auth.loadingUser && canEnterAdmin(permissions),
+    canEnter: canEnterAdmin(permissions),
   };
 }

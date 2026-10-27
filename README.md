@@ -18,10 +18,16 @@ ADMIN/STAFF hoặc vai trò tùy chỉnh có capability quản trị được ch
 
 Hướng dẫn từng thao tác, bảng đối chiếu **14 API mới có màn hình**, các API
 chưa có backend và bằng chứng kiểm thử tại [runbook hệ thống](docs/system-workspace.md).
-Local đạt 116/116 Node tests, TypeScript/Vite và audit 0; các thao tác ghi thử
+Local đạt 117/117 Node tests, TypeScript/Vite và audit 0; các thao tác ghi thử
 chỉ trên fixture loopback. Không sửa backend/schema/dependency/env/IAM hoặc
 thực hiện giao dịch/quyền/password production trong đợt phát triển giao diện.
-Trạng thái PR/CI/deploy phải kiểm theo GitHub và `release.json` thực tế.
+Đã merge [PR #12](https://github.com/triramisu/shop-ui/pull/12) sau
+[CI PR](https://github.com/triramisu/shop-ui/actions/runs/40520885596) xanh.
+[CI/CD main](https://github.com/triramisu/shop-ui/actions/runs/40521075420)
+verify/deploy success; marker/index đã khớp commit
+`1237e01e9cd2f6592d810e02c05499d66c9c6aab`. Anonymous mở `/admin/users`
+chuyển đúng sang login. Các commit tài liệu sau có thể đổi marker commit;
+kiểm `release.json` mới nhất. Chưa nghiệm thu ghi quyền/password/refund thật.
 
 ## WEB-ADMIN-01 — không gian quản trị sản phẩm và kho
 
