@@ -10,6 +10,7 @@ import {
   Spinner,
 } from '@/components/Layout';
 import { Icon } from '@/components/Icon';
+import { PurchaseSteps } from '@/components/PurchaseSteps';
 import { formatMoney } from '@/lib/format';
 import type { CartResponse } from '@/lib/types';
 import { ApiError } from '@/lib/apiClient';
@@ -68,6 +69,7 @@ export function CartPage() {
   return (
     <div className="container inner-page">
       <Breadcrumbs items={[{ label: 'Giỏ hàng' }]} />
+      <PurchaseSteps current={0} />
       <div className="page-heading">
         <span className="eyebrow">YOUR EVERYDAY PICKS</span>
         <h1>

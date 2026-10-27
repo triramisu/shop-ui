@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="vi">
+<meta charset="utf-8">
+<title>Aydibro — local responsive QA</title>
+<style>
+  body { margin: 0; font: 14px system-ui; background: #e5e5e5; }
+  header { padding: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  iframe { display: block; border: 0; background: white; }
+</style>
+<header>
+  <strong>LOCAL QA — không phải bản UI đã phát hành</strong>
+  <label>Kích thước
+    <select id="size"><option>375×812</option><option>768×1024</option><option>812×375</option><option>1200×1000</option><option>1440×1000</option><option>1440×1700</option></select>
+  </label>
+  <label>Trang <select id="page"><option value="/">Trang chủ</option><option value="/products">Sản phẩm</option><option value="/login">Đăng nhập</option><option value="/products/a0000000-0000-4000-8000-000000000001">Chi tiết sản phẩm fixture</option></select></label>
+  <output id="result" aria-live="polite"></output>
+</header>
+<iframe title="Cửa hàng trong khung kiểm tra" width="375" height="812" src="/"></iframe>
+<script>
+  const frame = document.querySelector('iframe');
+  const params = new URLSearchParams(location.search);
+  if ([...document.querySelector('#size').options].some(option => option.value === params.get('size'))) {
+    document.querySelector('#size').value = params.get('size');
+    [frame.width, frame.height] = params.get('size').split('×');
+  }
+  if ([...document.querySelector('#page').options].some(option => option.value === params.get('page'))) {
+    document.querySelector('#page').value = params.get('page');
+    frame.src = params.get('page');
+  }
+  function reportSize() {
+    const doc = frame.contentDocument;
+    if (!doc) return;
+    document.querySelector('#result').textContent = `client ${doc.documentElement.clientWidth}px / scroll ${doc.documentElement.scrollWidth}px`;
+  }
+  document.querySelector('#size').addEventListener('change', (event) => {
+    const [width, height] = event.target.value.split('×');
+    frame.width = width; frame.height = height;
+    requestAnimationFrame(reportSize);
+  });
+  document.querySelector('#page').addEventListener('change', (event) => { frame.src = event.target.value; });
+  frame.addEventListener('load', reportSize);
+  const timer = setInterval(reportSize, 1000);
+  addEventListener('pagehide', () => clearInterval(timer), {once:true});
+</script>
+</html>

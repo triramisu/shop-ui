@@ -1,94 +1,125 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/auth/AuthContext';
 import { cartApi } from '@/api/cart';
 import { catalogApi } from '@/api/catalog';
-import { useTheme } from '@/lib/useTheme';
 import { useSaved } from '@/lib/saved';
 import { Icon } from './Icon';
 import { CatalogNavLink } from './CatalogNavLink';
+import { categoryLabel } from './catalog/presentation';
 
 export function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { theme, setTheme } = useTheme();
   const { saved } = useSaved();
+  const menuDialog = useRef<HTMLDialogElement>(null);
+  const searchDialog = useRef<HTMLDialogElement>(null);
   const [menu, setMenu] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const categories = useQuery({
+    queryKey: ['categories'],
+    queryFn: catalogApi.categories,
+  });
   const cart = useQuery({
     queryKey: ['cart'],
     queryFn: cartApi.get,
     enabled: isAuthenticated,
   });
-  const categories = useQuery({
-    queryKey: ['categories'],
-    queryFn: catalogApi.categories,
-  });
   const count = isAuthenticated ? (cart.data?.totalQuantity ?? 0) : 0;
-  const dark =
-    theme === 'dark' ||
-    (theme === 'system' &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   useEffect(() => {
+    menuDialog.current?.close();
+    searchDialog.current?.close();
     setMenu(false);
+    setSearchOpen(false);
     setQuery(new URLSearchParams(location.search).get('q') ?? '');
   }, [location]);
+  useEffect(() => {
+    if (!menu && !searchOpen) return;
+    const before = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = before;
+    };
+  }, [menu, searchOpen]);
+  useEffect(() => {
+    const breakpoint = window.matchMedia('(min-width: 901px)');
+    function desktop(event: MediaQueryListEvent) {
+      if (event.matches) {
+        const focusWasInMenu = menuDialog.current?.contains(
+          document.activeElement,
+        );
+        menuDialog.current?.close();
+        if (focusWasInMenu)
+          document.querySelector<HTMLAnchorElement>('.wordmark')?.focus();
+      }
+    }
+    breakpoint.addEventListener('change', desktop);
+    return () => breakpoint.removeEventListener('change', desktop);
+  }, []);
 
   function search(event: React.FormEvent) {
     event.preventDefault();
     const value = query.trim();
     navigate(value ? `/products?q=${encodeURIComponent(value)}` : '/products');
+    searchDialog.current?.close();
   }
 
   return (
     <>
       <div className="announcement">
         <div className="container">
-          <span>Chọn điều bạn thích. Nâng tầm mỗi ngày.</span>
+          <span>AYDIBRO — EVERYDAY AUDIO</span>
+          <p>Âm thanh cho khoảng trời riêng.</p>
           <Link to="/products">
-            Khám phá bộ sưu tập <Icon name="arrow" size={13} />
+            Khám phá cửa hàng <Icon name="arrow" size={14} />
           </Link>
         </div>
       </div>
       <header className="site-header">
         <div className="container header-main">
+          <nav className="desktop-navigation" aria-label="Điều hướng chính">
+            <CatalogNavLink>Cửa hàng</CatalogNavLink>
+            {categories.data?.slice(0, 3).map((category) => (
+              <CatalogNavLink key={category.id} categoryId={category.id}>
+                {categoryLabel(category.name)}
+              </CatalogNavLink>
+            ))}
+          </nav>
           <button
             className="icon-button mobile-menu-button"
-            aria-label={menu ? 'Đóng menu' : 'Mở menu'}
+            type="button"
+            aria-label="Mở menu"
+            aria-haspopup="dialog"
             aria-expanded={menu}
             aria-controls="mobile-navigation"
-            onClick={() => setMenu(!menu)}
+            onClick={() => {
+              menuDialog.current?.showModal();
+              setMenu(true);
+            }}
           >
-            <Icon name={menu ? 'close' : 'menu'} />
+            <Icon name="menu" />
           </button>
           <Link to="/" className="wordmark" aria-label="Aydibro — trang chủ">
             aydibro<span>.</span>
           </Link>
-          <form className="header-search" role="search" onSubmit={search}>
-            <Icon name="search" size={18} />
-            <input
-              aria-label="Tìm kiếm sản phẩm"
-              placeholder="Bạn đang tìm điều gì?"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              maxLength={100}
-            />
-            <button type="submit" aria-label="Tìm kiếm">
-              <Icon name="arrow" size={18} />
-            </button>
-          </form>
           <div className="header-actions">
             <button
-              className="icon-button theme-button"
-              onClick={() => setTheme(dark ? 'light' : 'dark')}
-              aria-label={
-                dark ? 'Chuyển giao diện sáng' : 'Chuyển giao diện tối'
-              }
+              className="icon-button"
+              type="button"
+              aria-label="Mở tìm kiếm"
+              aria-haspopup="dialog"
+              aria-expanded={searchOpen}
+              aria-controls="store-search"
+              onClick={() => {
+                searchDialog.current?.showModal();
+                setSearchOpen(true);
+              }}
             >
-              <Icon name={dark ? 'sun' : 'moon'} size={19} />
+              <Icon name="search" />
             </button>
             <NavLink
               to="/saved"
@@ -102,7 +133,7 @@ export function Navbar() {
             </NavLink>
             <Link
               to={isAuthenticated ? '/profile' : '/login'}
-              className="account-link"
+              className="icon-button"
               aria-label={
                 isAuthenticated
                   ? `Tài khoản ${user?.firstName || user?.username || 'của bạn'}`
@@ -110,95 +141,112 @@ export function Navbar() {
               }
             >
               <Icon name="user" />
-              <span>
-                <small>{isAuthenticated ? 'Xin chào,' : 'Chào bạn,'}</small>
-                <strong>
-                  {isAuthenticated
-                    ? user?.firstName || user?.username || 'Tài khoản'
-                    : 'Đăng nhập'}
-                </strong>
-              </span>
             </Link>
             <NavLink
               to="/cart"
-              className="cart-link"
+              className="icon-button storefront-cart"
               aria-label={`Giỏ hàng, ${count} sản phẩm`}
             >
               <Icon name="bag" />
-              <span className="cart-word">Giỏ hàng</span>
-              <span className="cart-count">{count}</span>
+              <span className="storefront-cart-count">{count}</span>
             </NavLink>
           </div>
         </div>
-        <div className="header-divider">
-          <div className="container header-nav">
-            <nav aria-label="Điều hướng chính">
-              <NavLink to="/" end>
-                Khám phá
-              </NavLink>
-              <CatalogNavLink>Tất cả sản phẩm</CatalogNavLink>
-              {categories.data?.slice(0, 4).map((category) => (
-                <CatalogNavLink
-                  key={category.id}
-                  categoryId={category.id}
-                >
-                  {category.name}
-                </CatalogNavLink>
-              ))}
-            </nav>
-            <Link
-              className="nav-story"
-              to={isAuthenticated ? '/orders' : '/#collections'}
-            >
-              {isAuthenticated ? 'Đơn hàng của tôi' : 'Góc cảm hứng'}{' '}
-              <Icon name={isAuthenticated ? 'box' : 'arrow-up'} size={14} />
-            </Link>
-          </div>
-        </div>
-        {menu && (
-          <div className="mobile-navigation" id="mobile-navigation">
-            <form className="header-search" role="search" onSubmit={search}>
-              <Icon name="search" size={18} />
-              <input
-                aria-label="Tìm kiếm trên điện thoại"
-                placeholder="Tìm sản phẩm…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                maxLength={100}
-              />
-              <button type="submit" aria-label="Tìm">
-                <Icon name="arrow" size={18} />
-              </button>
-            </form>
-            <Link to="/">Trang chủ</Link>
-            <CatalogNavLink>Tất cả sản phẩm</CatalogNavLink>
-            {categories.data?.map((category) => (
-              <CatalogNavLink key={category.id} categoryId={category.id}>
-                {category.name}
-              </CatalogNavLink>
-            ))}
-            <Link to="/saved">Sản phẩm đã lưu ({saved.length})</Link>
-            {isAuthenticated && <Link to="/orders">Đơn hàng của tôi</Link>}
-            <button
-              className="text-button"
-              onClick={() => setTheme(dark ? 'light' : 'dark')}
-            >
-              {dark ? 'Chuyển giao diện sáng' : 'Chuyển giao diện tối'}
-            </button>
-            {isAuthenticated && (
-              <button
-                className="text-button"
-                onClick={() => {
-                  void logout();
-                  navigate('/');
-                }}
-              >
-                Đăng xuất
-              </button>
-            )}
-          </div>
-        )}
       </header>
+
+      <dialog
+        ref={menuDialog}
+        className="mobile-navigation"
+        id="mobile-navigation"
+        aria-labelledby="mobile-menu-title"
+        onClose={() => setMenu(false)}
+      >
+        <div className="drawer-heading">
+          <h2 id="mobile-menu-title">Khám phá Aydibro</h2>
+          <button
+            className="icon-button"
+            aria-label="Đóng menu"
+            onClick={() => menuDialog.current?.close()}
+          >
+            <Icon name="close" />
+          </button>
+        </div>
+        <nav aria-label="Điều hướng trên điện thoại">
+          <NavLink to="/" end>
+            Trang chủ
+          </NavLink>
+          <CatalogNavLink>Tất cả sản phẩm</CatalogNavLink>
+          {categories.data?.map((category) => (
+            <CatalogNavLink key={category.id} categoryId={category.id}>
+              {categoryLabel(category.name)}
+            </CatalogNavLink>
+          ))}
+          <Link to="/saved">Đã lưu ({saved.length})</Link>
+          <Link to={isAuthenticated ? '/orders' : '/login'}>
+            {isAuthenticated ? 'Đơn hàng của tôi' : 'Đăng nhập'}
+          </Link>
+        </nav>
+        {isAuthenticated && (
+          <button
+            className="text-button"
+            onClick={() => {
+              void logout();
+              navigate('/');
+            }}
+          >
+            Đăng xuất
+          </button>
+        )}
+        <p className="drawer-footnote">
+          Một playlist hay. Một khoảng trời riêng.
+        </p>
+      </dialog>
+
+      <dialog
+        ref={searchDialog}
+        id="store-search"
+        className="store-search"
+        aria-labelledby="store-search-title"
+        onClose={() => setSearchOpen(false)}
+      >
+        <div className="drawer-heading">
+          <h2 id="store-search-title">Bạn muốn nghe gì hôm nay?</h2>
+          <button
+            className="icon-button"
+            aria-label="Đóng tìm kiếm"
+            onClick={() => searchDialog.current?.close()}
+          >
+            <Icon name="close" />
+          </button>
+        </div>
+        <form className="header-search" role="search" onSubmit={search}>
+          <Icon name="search" size={21} />
+          <input
+            type="search"
+            autoFocus
+            aria-label="Tìm kiếm sản phẩm"
+            placeholder="Tìm tai nghe, tìm chất riêng…"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            maxLength={100}
+            enterKeyHint="search"
+          />
+          <button type="submit" aria-label="Tìm kiếm">
+            <Icon name="arrow" size={21} />
+          </button>
+        </form>
+        <p className="search-hint">Gợi ý từ cửa hàng</p>
+        <div className="search-suggestions">
+          <Link to="/products">
+            Tất cả sản phẩm <Icon name="arrow-up" size={16} />
+          </Link>
+          {categories.data?.map((category) => (
+            <Link key={category.id} to={`/products?category=${category.id}`}>
+              {categoryLabel(category.name)} <Icon name="arrow-up" size={16} />
+            </Link>
+          ))}
+        </div>
+      </dialog>
     </>
   );
 }

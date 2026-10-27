@@ -10,6 +10,7 @@ import {
   Spinner,
 } from '@/components/Layout';
 import { Icon } from '@/components/Icon';
+import { PurchaseSteps } from '@/components/PurchaseSteps';
 import { formatMoney, newIdempotencyKey } from '@/lib/format';
 import { ApiError } from '@/lib/apiClient';
 
@@ -112,13 +113,7 @@ export function CheckoutPage() {
         </h1>
         <p>Kiểm tra lại một lần nữa, rồi cùng hoàn tất đơn hàng nhé.</p>
       </div>
-      <div className="checkout-steps">
-        <Link to="/cart">01 Giỏ hàng</Link>
-        <Icon name="chevron" size={12} />
-        <strong>02 Xác nhận đơn hàng</strong>
-        <Icon name="chevron" size={12} />
-        <span>03 Hoàn tất</span>
-      </div>
+      <PurchaseSteps current={1} />
       <div className="checkout-layout">
         <section>
           <div className="checkout-lines">

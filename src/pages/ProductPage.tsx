@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Link,
   useNavigate,
@@ -14,6 +14,7 @@ import { Icon } from '@/components/Icon';
 import { formatMoney } from '@/lib/format';
 import { useSaved } from '@/lib/saved';
 import { ApiError } from '@/lib/apiClient';
+import { ProductCard } from '@/components/ProductCard';
 
 export function ProductPage() {
   const { productId = '' } = useParams();
@@ -25,6 +26,16 @@ export function ProductPage() {
   const variantId = params.get('variant') ?? '';
   const [imageId, setImageId] = useState('');
   const [failedUrl, setFailedUrl] = useState('');
+  const zoomDialog = useRef<HTMLDialogElement>(null);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  useEffect(() => {
+    if (!zoomOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [zoomOpen]);
   const qty = Math.min(
     999,
     Math.max(1, Math.floor(Number(params.get('qty'))) || 1),
@@ -53,6 +64,21 @@ export function ProductPage() {
     queryFn: () => catalogApi.productImages(productId),
     enabled: !!productId,
     staleTime: 4 * 60_000,
+  });
+  const related = useQuery({
+    queryKey: ['related-products', product.data?.category?.id, productId],
+    queryFn: ({ signal }) =>
+      catalogApi.searchProducts(
+        {
+          categoryId: product.data?.category?.id,
+          page: 0,
+          size: 5,
+          sortBy: 'CREATED_AT',
+          direction: 'DESC',
+        },
+        signal,
+      ),
+    enabled: Boolean(product.data?.category?.id),
   });
   const selected = useMemo(() => {
     const variants = product.data?.variants ?? [];
@@ -98,6 +124,9 @@ export function ProductPage() {
     );
   const p = product.data;
   const isSaved = saved.includes(productId);
+  const relatedProducts = (related.data?.content ?? [])
+    .filter((item) => item.id !== productId)
+    .slice(0, 4);
 
   return (
     <div className="container inner-page">
@@ -107,7 +136,7 @@ export function ProductPage() {
             ? [
                 {
                   label: p.category.name,
-                  to: `/?category=${p.category.id}#products`,
+                  to: `/products?category=${p.category.id}`,
                 },
               ]
             : []),
@@ -144,7 +173,33 @@ export function ProductPage() {
             >
               <Icon name="heart" fill={isSaved ? 'currentColor' : 'none'} />
             </button>
+            {image && image.url !== failedUrl && (
+              <button
+                className="gallery-zoom"
+                type="button"
+                aria-label="Phóng to ảnh sản phẩm"
+                aria-haspopup="dialog"
+                aria-controls="product-image-dialog"
+                onClick={() => {
+                  zoomDialog.current?.showModal();
+                  setZoomOpen(true);
+                }}
+              >
+                <Icon name="search" size={18} />
+                <span>Phóng to</span>
+              </button>
+            )}
           </div>
+          <p className="gallery-caption">
+            <span>AYDIBRO / THE AUDIO OBJECT</span>
+            <span>
+              {images.isLoading
+                ? 'Đang tải ảnh…'
+                : images.data
+                  ? `${images.data.length} ảnh sản phẩm`
+                  : 'Hình ảnh đang cập nhật'}
+            </span>
+          </p>
           {images.data && images.data.length > 1 && (
             <div className="gallery-thumbnails">
               {images.data.map((item, i) => (
@@ -196,7 +251,12 @@ export function ProductPage() {
                       setNotice(null);
                     }}
                   >
-                    {variant.name}
+                    <span>
+                      {variant.name}
+                      <small>
+                        {formatMoney(variant.price, variant.currency)}
+                      </small>
+                    </span>
                     {selected?.id === variant.id && (
                       <Icon name="check" size={15} />
                     )}
@@ -309,6 +369,51 @@ export function ProductPage() {
           </details>
         </div>
       </div>
+      <dialog
+        className="product-lightbox"
+        ref={zoomDialog}
+        id="product-image-dialog"
+        aria-labelledby="product-image-title"
+        onClose={() => setZoomOpen(false)}
+      >
+        <div className="drawer-heading">
+          <h2 id="product-image-title">{p.name}</h2>
+          <button
+            className="icon-button"
+            type="button"
+            aria-label="Đóng ảnh phóng to"
+            onClick={() => zoomDialog.current?.close()}
+          >
+            <Icon name="close" />
+          </button>
+        </div>
+        {image && <img src={image.url} alt={p.name} />}
+        <p>Ảnh sản phẩm từ bộ sưu tập Aydibro.</p>
+      </dialog>
+      {relatedProducts.length > 0 && (
+        <section
+          className="related-products"
+          aria-labelledby="related-products-title"
+        >
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">MORE TO LISTEN TO</span>
+              <h2 id="related-products-title">Cùng bộ sưu tập.</h2>
+            </div>
+            <Link
+              className="editorial-link"
+              to={`/products?category=${p.category!.id}`}
+            >
+              Khám phá danh mục <Icon name="arrow-up" size={17} />
+            </Link>
+          </div>
+          <div className="product-grid">
+            {relatedProducts.map((item) => (
+              <ProductCard key={item.id} product={item} />
+            ))}
+          </div>
+        </section>
+      )}
       <div className="detail-bottom">
         <span className="eyebrow">FIND YOUR NEXT EVERYDAY FAVORITE</span>
         <Link to="/#products" className="text-link">

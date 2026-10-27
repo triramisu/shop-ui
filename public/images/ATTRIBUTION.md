@@ -1,5 +1,29 @@
 # Editorial image assets
 
+## everyday-listening.webp — 27/10/2026
+
+Original campaign image generated with the built-in image generation tool;
+saved into this project as WebP (1536×1024, 185318 bytes). The person and the
+unbranded headphone are fictional editorial subjects, not actual catalog items.
+No Belledonne photography, branding or text was copied. The original PNG is
+retained in the tool output directory; the project uses the compressed WebP.
+
+Saved project path: `public/images/everyday-listening.webp`.
+S3 UI object: `images/everyday-listening.webp`, private bucket, AES256.
+CloudFront URL: https://aydibro.click/images/everyday-listening.webp .
+
+Final generation prompt (built-in tool, no CLI fallback):
+
+> Use case: photorealistic-natural. Asset type: premium ecommerce editorial hero photo for the Vietnamese audio shop Aydibro. Create one wide cinematic 3:2 photograph (landscape), with the quiet editorial craft of independent European fashion campaigns. Scene: late afternoon at an old Mediterranean modernist seaside building with warm ivory limestone, dark wooden doorframes and a glimpse of desaturated sea. Subject: a stylish adult East Asian woman in a cream cotton shirt wearing plain unbranded silver over-ear headphones, candid profile facing left, eyes naturally closed while listening. Place her in the RIGHT HALF of the image, upper body visible; leave LEFT HALF mostly textured shaded dark olive stone and soft shadow for a large white headline overlay. Natural imperfect skin, realistic brushed aluminium headphones, tactile cotton, subtle film grain and deep photographic shadows. An intimate natural editorial photograph shot on 35mm, warm daylight, not glossy advertising or CGI. Muted sand, charcoal, dark olive and silver. The image will be cropped to a wide full-bleed website hero at 16:8 on desktop and portrait on mobile. Keep the face and headphones in the right-central safe zone. No typography, no text, no logo, no watermark, no illustration, no UI, no border. This is campaign imagery of a fictional unbranded headphone, not a live product catalog photograph.
+
+## Earlier assets
+
+`audio-still-life-v1.webp` is a web-optimized derivative of the original
+`hero-audio.png` below, with unchanged composition: 1536×1024, 142502 bytes,
+WebP quality86. The original PNG remains for historical bundles. This variant
+is stored in the private S3 UI bucket at `images/audio-still-life-v1.webp`
+and served through CloudFront; no public bucket or extra ACL was created.
+
 `hero-audio.png` is an original image created for this storefront using the built-in image generation tool. It is an editorial illustration and does not claim to depict an item in the live catalog.
 
 Final prompt: Photorealistic editorial studio still life of unbranded silver and ivory headphones on matte terracotta and sand stone pedestals, warm cream background, natural side light, realistic brushed-metal texture, landscape 3:2, no text, logos or watermark.
