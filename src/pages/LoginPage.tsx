@@ -21,6 +21,7 @@ export function LoginPage() {
   const [captcha, setCaptcha] = useState<CaptchaResponse | null>(null);
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [error, setError] = useState('');
+  const [needsBrowserVerification, setNeedsBrowserVerification] = useState(false);
   const [busy, setBusy] = useState(false);
   const [captchaBusy, setCaptchaBusy] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -46,6 +47,7 @@ export function LoginPage() {
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setError('');
+    setNeedsBrowserVerification(false);
     setBusy(true);
     try {
       await login({
@@ -67,6 +69,9 @@ export function LoginPage() {
             : 'Mã xác thực chưa đúng hoặc đã hết hạn. Hãy dùng mã mới.',
         );
         await loadCaptcha();
+      } else if (err instanceof ApiError && err.wafChallenge) {
+        setError('Hãy xác minh trình duyệt rồi nhập lại thông tin đăng nhập.');
+        setNeedsBrowserVerification(true);
       } else {
         setError(
           err instanceof ApiError && err.code === ErrorCode.RATE_LIMIT_EXCEEDED
@@ -79,6 +84,13 @@ export function LoginPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  function verifyBrowser() {
+    const url = new URL('/login?waf-verify=1', window.location.origin);
+    // Keep the router's return destination across the full HTML navigation.
+    window.history.replaceState(window.history.state, '', url);
+    window.location.reload();
   }
 
   return (
@@ -100,6 +112,11 @@ export function LoginPage() {
         {error && (
           <div className="alert alert-danger" role="alert">
             {error}
+            {needsBrowserVerification && (
+              <button type="button" className="btn btn-secondary btn-sm" onClick={verifyBrowser}>
+                Xác minh trình duyệt
+              </button>
+            )}
           </div>
         )}
         <div className="field">
