@@ -25,6 +25,7 @@ export class ApiError extends Error {
     public readonly code: number,
     message: string,
     public readonly status: number,
+    public readonly wafChallenge = false,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -95,6 +96,9 @@ async function refreshAccessToken(): Promise<boolean> {
 }
 
 async function parse<T>(res: Response): Promise<T> {
+  if (res.status === 202 && res.headers.get('x-amzn-waf-action') === 'challenge') {
+    throw new ApiError(202, 'Cần xác minh trình duyệt để đăng nhập.', 202, true);
+  }
   let json: ApiResponse<T> | undefined;
   try {
     json = (await res.json()) as ApiResponse<T>;
